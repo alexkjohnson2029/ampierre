@@ -1,6 +1,7 @@
 """FastAPI backend.
 
     POST /api/parse     schematic image (or SPICE text) -> netlist + questions
+    POST /api/netlist   netlist drawn in the editor     -> the same, no model
     POST /api/place     netlist with packages chosen    -> breadboard layout
     GET  /api/packages  the package catalogue for the picker
     GET  /api/examples  built-in netlists, so the app is usable with no API key
@@ -185,6 +186,15 @@ async def parse(
     except LLMError as e:
         raise HTTPException(400, str(e)) from e
 
+    return ParseResponse(netlist=netlist, questions=questions_for(netlist))
+
+
+@app.post("/api/netlist", response_model=ParseResponse)
+def netlist_route(netlist: Netlist):
+    """A netlist that needs no reading — drawn in the editor, or saved earlier.
+    Straight to the part questions, no model involved."""
+    if not netlist.components:
+        raise HTTPException(400, "The netlist has no components.")
     return ParseResponse(netlist=netlist, questions=questions_for(netlist))
 
 

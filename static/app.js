@@ -1,6 +1,7 @@
 /* App wiring: upload -> parse -> pick packages -> place -> render -> step through. */
 import { renderBoard } from "./breadboard.js";
 import { pinoutDiagram } from "./pinout.js";
+import { mountEditor } from "./editor.js";
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -159,6 +160,47 @@ loadExamples().then(async (list) => {
   }
   $("build").click();
 });
+
+// ---------------------------------------------------------------------------
+// Step 1, the other way — draw the schematic
+// ---------------------------------------------------------------------------
+
+const editor = mountEditor($("editor"), {
+  onUse: async (netlist) => {
+    busy(true, "reading the drawing…");
+    try {
+      showParse(
+        await api("/api/netlist", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(netlist),
+        })
+      );
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      busy(false);
+    }
+  },
+});
+
+function setInputMode(mode) {
+  $("step-draw").hidden = mode !== "draw";
+  $("step-input").hidden = mode !== "upload";
+  for (const id of ["mode-upload", "mode-draw"]) {
+    $(id).classList.toggle("active", $(id).dataset.mode === mode);
+  }
+  try {
+    localStorage.setItem("ampierre.inputMode", mode);
+  } catch {}
+  if (mode === "draw") editor.shown();
+}
+for (const id of ["mode-upload", "mode-draw"]) {
+  $(id).onclick = () => setInputMode($(id).dataset.mode);
+}
+try {
+  if (localStorage.getItem("ampierre.inputMode") === "draw") setInputMode("draw");
+} catch {}
 
 // ---------------------------------------------------------------------------
 // Step 2 — part picker

@@ -11,15 +11,15 @@ pick the real parts) and **Board** (the layout, the build timeline, the parts li
 **About** (top right) explains what the project is for and who made it; the
 developer API reference is linked from the bottom of that page.
 
-The model does one job — read the picture and say what connects to what. Placement,
+The model does one job â€” read the picture and say what connects to what. Placement,
 wiring and the drawing are ordinary code, so the same netlist always gives the same
 board and a wrong layout is a bug you can reproduce instead of a bad roll.
 
 ```
-schematic.png ──► llm.py ──► Netlist ──► placer.py ──► Layout ──► breadboard.js ──► SVG
+schematic.png â”€â”€â–º llm.py â”€â”€â–º Netlist â”€â”€â–º placer.py â”€â”€â–º Layout â”€â”€â–º breadboard.js â”€â”€â–º SVG
                  (model)    (JSON)      (arithmetic)   (JSON)      (renderer)
-                                            │
-                                            └─► breadboard.verify() — proves the board
+                                            â”‚
+                                            â””â”€â–º breadboard.verify() â€” proves the board
                                                 is the circuit before you plug it in
 ```
 
@@ -36,15 +36,15 @@ cp .env.example .env          # then put your key in .env
 python3 run.py                # http://127.0.0.1:8000
 ```
 
-Get the key at console.anthropic.com → API keys. It lives in `.env`, which `.gitignore`
-already excludes — don't paste it into the code.
+Get the key at console.anthropic.com â†’ API keys. It lives in `.env`, which `.gitignore`
+already excludes â€” don't paste it into the code.
 
 **No key yet?** Everything except reading the image works without one. Open the app and
 click one of the example circuits, or stay in the terminal:
 
 ```bash
 python3 -m app.cli examples/three_band_equalizer.json      # build steps, no network
-python3 -m pytest -q                                       # 170 tests, no network
+python3 -m pytest -q                                       # 173 tests, no network
 ```
 
 ### Exporting a board without the browser
@@ -58,17 +58,42 @@ Needs Node 18+. Handy for dropping a board into a lab report.
 
 ## Using it
 
-1. **Load a schematic.** Screenshot the schematic window, not the whole screen — the
+### Drawing the schematic instead
+
+Choose **Draw the schematic** at the top of the Input tab to draw the circuit on the site,
+LTspice-style, instead of uploading a picture. A drawing is already a netlist, so it goes
+straight to step 2 with no model call and no API key.
+
+- Parts: resistor, capacitor, electrolytic, inductor, potentiometer, diode, LED, NPN, PNP,
+  N/P-MOSFET, op-amp, regulator, DC supply, signal generator, ground and net labels.
+- Keys follow LTspice: `R` `C` `L` `D` place parts, `G` ground, `V` DC supply, `W` (or F3)
+  wire, `N` (or F4) net label, Ctrl+R rotate, Ctrl+E mirror, Delete (or F5) delete, Esc
+  back to select, Ctrl+Z / Ctrl+Y undo and redo. Drag to move a part (its wires stretch
+  with it), drag empty space to pan, scroll to zoom.
+- Connections work like LTspice: wires join at their ends or where an end lands on another
+  wire (a dot is drawn), crossing wires don't join, and labels with the same name are the
+  same net. A pin connected to nothing gets a small red square.
+- A DC supply wired to ground names its net V+ or V- (by the sign of its voltage) and goes
+  on a rail; untick "Powers the circuit" for a test voltage. A signal generator's net is VIN.
+- The drawing saves itself in the browser. **Save file** / **Open file** keep a copy, and
+  **Export SPICE** writes a `.cir` deck you can open in LTspice.
+
+The editor lives in `static/editor.js`; the symbols, connectivity and the netlist and SPICE
+conversion are in `static/schematic.js`. `POST /api/netlist` takes the result.
+
+### From a screenshot
+
+1. **Load a schematic.** Screenshot the schematic window, not the whole screen â€” the
    model reads component labels, and LTspice draws them small. If something is unclear
    (which op-amp, what the supply is), say so in the hint box; it goes to the model
    verbatim.
 2. **Pick the real parts.** Choices on the left, the pinout of whichever one is selected
    on the right, so you can check the two against each other without scrolling. A triangle on a schematic has no pinout. An op-amp could be
    an LM741 (output on pin 6) or a TL072 (output on pin 1), and a TO-92 transistor is
-   E–B–C or C–B–E depending on which one you grabbed from the drawer. The app asks about
+   Eâ€“Bâ€“C or Câ€“Bâ€“E depending on which one you grabbed from the drawer. The app asks about
    every part where the package changes the wiring, and pre-selects a guess from the
    value field.
-   Identical parts are asked about once — four 1N4007s in a bridge are one question, not
+   Identical parts are asked about once â€” four 1N4007s in a bridge are one question, not
    four. Each choice shows a datasheet-style pinout drawn from the package's own pin data,
    with the pins your circuit uses picked out and the net names on them. If your part
    isn't in the list, choose **My own part** and type the pinout: name, package, pin count,
@@ -82,14 +107,14 @@ Needs Node 18+. Handy for dropping a board into a lab report.
    Parts already placed are solid and the current one is ringed; anything not placed yet
    is simply absent, so the board looks like your board does. Tick **Ghost upcoming
    parts** to see what's coming, faintly, where it will go. "Show whole board" goes back.
-   The last steps hook up the instruments — the bench supply first, then the wave
-   generator — after a continuity check.
+   The last steps hook up the instruments â€” the bench supply first, then the wave
+   generator â€” after a continuity check.
 
 ### The featured build
 
 The first example, marked **AJ's build**, is the three-band audio equalizer AMPierre's
 creator designed in LTspice and built on a breadboard: an input amp, bass/mid/treble
-filters with a trimmer each, three buffers, a summing amp and a clip LED — eight op-amps
+filters with a trimmer each, three buffers, a summing amp and a clip LED â€” eight op-amps
 in two OP484s, 34 parts. `/?example=three_band_equalizer` opens it straight on the board,
 and the About page shows it with a live preview.
 
@@ -100,52 +125,52 @@ diagonal jumpers, no crossings and nothing lying over a part. See
 ### Bench instruments
 
 Schematics draw supplies and signal generators as voltage sources. The netlist lists them
-in `sources`, and only a **DC source that powers the circuit** — one feeding an op-amp's
-or chip's supply pins, or a transistor stage's Vcc — gets a rail. A wave generator, or a
+in `sources`, and only a **DC source that powers the circuit** â€” one feeding an op-amp's
+or chip's supply pins, or a transistor stage's Vcc â€” gets a rail. A wave generator, or a
 second DC channel used as an input voltage, is an input: it clips onto the strip of the
 net it drives, never onto a rail, even if the netlist called that net a supply. The board
 shows every clip as a cable from off the board with a tag (`+4.5 V`, `COM`, `GEN`,
-`GEN ⏚`), and the build order hooks them up last: supply off, continuity check, supply,
+`GEN âš`), and the build order hooks them up last: supply off, continuity check, supply,
 generator, then "supply on first".
 
-A negative supply drawn LTspice-style — the + end on the net with a value of −4.5 — is
+A negative supply drawn LTspice-style â€” the + end on the net with a value of âˆ’4.5 â€” is
 recognised as negative and goes on the bottom + rail. A generator whose ground isn't
 circuit ground (the AC into a bridge rectifier) gets a note about scope-ground shorts.
 
 ### Potentiometers
 
 Trimmers (three pins in a row, 0.1" apart) and panel pots (legs to bend) are in the
-library, pins `1`, `W` (wiper), `3`. A pot used as a variable resistor — one end left
-unconnected, as on the equalizer — still has three legs in the board; the spare one gets
+library, pins `1`, `W` (wiper), `3`. A pot used as a variable resistor â€” one end left
+unconnected, as on the equalizer â€” still has three legs in the board; the spare one gets
 a strip to itself so nothing else can land on it.
 
 SPICE has no knob, so pots are usually drawn as two resistors with the wiper at the
-junction, often a 1 Ω placeholder and a floating end. The model is told to read that
+junction, often a 1 Î© placeholder and a floating end. The model is told to read that
 pattern as one potentiometer.
 
 ### Op-amps drawn one at a time
 
 A schematic draws every op-amp as its own triangle. When several are given a dual or
-quad package, `app/gates.py` puts them in shared chips — section A, B, C, D in turn, on
-one pair of supply pins — so eight op-amps on a quad become two chips, not eight. Only
+quad package, `app/gates.py` puts them in shared chips â€” section A, B, C, D in turn, on
+one pair of supply pins â€” so eight op-amps on a quad become two chips, not eight. Only
 op-amps on the same supply nets are combined. A quad is placed **turned round** (notch to
-the right) when that puts its V+ pin beside the top + rail and V− beside the bottom one.
+the right) when that puts its V+ pin beside the top + rail and Vâˆ’ beside the bottom one.
 
 ## Board conventions
 
-Standard 830-point board, 63 columns, rows A–E below the channel and F–J above.
+Standard 830-point board, 63 columns, rows Aâ€“E below the channel and Fâ€“J above.
 
 | Rail | Carries |
 | --- | --- |
 | top `+` | positive supply |
-| top `−` | ground |
-| bottom `−` | ground |
+| top `âˆ’` | ground |
+| bottom `âˆ’` | ground |
 | bottom `+` | **negative supply** |
 
 The two ground rails are separate copper, so the placer bonds them whenever both are
-used — with one jumper from rail to rail, or through an empty column (a drop from each
+used â€” with one jumper from rail to rail, or through an empty column (a drop from each
 rail and a jumper across the channel) when no column is clear all the way. Many boards
-also split each rail at the middle — if yours does, bridge it.
+also split each rail at the middle â€” if yours does, bridge it.
 
 Rows are rationed by job, which is what keeps the result readable:
 
@@ -170,20 +195,20 @@ The engine is `app/flow.py`:
 
 1. **Rank the nets** by how many parts away from the supply they are (breadth-first from
    `VCC`/`V+`). Ground is forced to the far end.
-2. **Group into blocks.** A transistor or IC is one block — its legs must sit in
+2. **Group into blocks.** A transistor or IC is one block â€” its legs must sit in
    neighbouring strips in pinout order. Every other net is a one-column block.
 3. **Order the blocks.** Each net hanging off a transistor or IC goes right beside it, on
-   whichever side its connections lean towards — so a common-emitter stage comes out
+   whichever side its connections lean towards â€” so a common-emitter stage comes out
    *input, then E-B-C, then output*, the way it's drawn. Nets that only connect to each
    other stay together; loose nets drift towards whatever they connect to. A circuit
    with no transistor or chip is arranged around its busiest net. Then each block is
    tried in every other position, keeping any move that shortens the total wiring.
-4. **Hand out columns** with a fixed gap between blocks — 5 in **Spacious**, 3 in
-   **Compact** — nudging a block over a column or two so its strips line up with real rail
+4. **Hand out columns** with a fixed gap between blocks â€” 5 in **Spacious**, 3 in
+   **Compact** â€” nudging a block over a column or two so its strips line up with real rail
    holes (the rails skip one every sixth column).
 5. **Plug parts into the rails.** A part with one end on supply or ground stands upright
-   between the rail and the strip of its other net — a pull-up from the top + rail, a
-   resistor to ground on the bottom − rail — so that end needs no jumper. These go in
+   between the rail and the strip of its other net â€” a pull-up from the top + rail, a
+   resistor to ground on the bottom âˆ’ rail â€” so that end needs no jumper. These go in
    first, because each has exactly one place it can stand.
 6. **Place everything else.** Each remaining part spans its two nets' columns, on the side
    of the channel where more of its nets already have a strip. If its row is crowded it
@@ -197,8 +222,8 @@ The engine is `app/flow.py`:
    diagonal.
 8. **Keep the cleanest.** The board is laid out six ways (parts plugged into the rails
    always, only where the strip keeps room for the rest of its net, or never; with and
-   without the rail-gap nudge), each is scored by `app/quality.py` — diagonal jumpers,
-   crossings, wires over parts, wire count — and the cleanest wins. Jumpers are planned
+   without the rail-gap nudge), each is scored by `app/quality.py` â€” diagonal jumpers,
+   crossings, wires over parts, wire count â€” and the cleanest wins. Jumpers are planned
    per net as the shortest set of links that no strip has to give more holes to than it
    has left.
 9. **Verify.** `breadboard.verify()` proves every net is one node with no shorts. Spare
@@ -206,37 +231,37 @@ The engine is `app/flow.py`:
    is caught as a short.
 
 If a circuit can't be laid out this way, the other spacings are tried, then it is packed
-tightly instead (the older `placer.py` algorithm) with a note saying so — you never get a
+tightly instead (the older `placer.py` algorithm) with a note saying so â€” you never get a
 wrong board, only a less pretty one. A jumper that can't lie flat goes corner to corner,
 and is drawn **arched**, on top of the parts with a shadow, the way a flexible jumper wire
 hops over the board.
 
 Across the five examples in both modes, this took the board from 70 jumpers (19 of them
 diagonal, 23 running over a part) to 50 (3 diagonal, none over a part). The remaining
-diagonals are real squeezes — seven parts meeting at a transistor's three legs fill every
+diagonals are real squeezes â€” seven parts meeting at a transistor's three legs fill every
 hole in its strips.
 
 **Spacious vs Compact** (toggle above the board): same shape, different gap between net
 columns. Spacious leaves room to see every lead and trace a node by eye; Compact uses
 fewer columns and gets more circuit in view. Compact also keeps a circuit with no IC
 entirely **above the channel**, unless that would make the wiring worse (diagonals,
-crossings or wires over parts the two-half layout doesn't need) — then it uses both
+crossings or wires over parts the two-half layout doesn't need) â€” then it uses both
 halves. Op-amp circuits always use both, since the chip straddles
 the channel. From the terminal: `--style flow`, `--style flow-compact`, or
 `--style packed`.
 
 Board conventions that hold in every mode:
 
-- DIP ICs straddle the centre channel, notch to the left with pin 1 in row E — or turned
+- DIP ICs straddle the centre channel, notch to the left with pin 1 in row E â€” or turned
   round, notch right, when that puts the supply pins beside their rails (quad op-amps).
 - Radial parts (LEDs, disc and electrolytic caps) plug into a rail and the first row in;
   axial ones stand 3.5 pitches out, over the holes they cover.
-- Parts are drawn at real size — resistors carry their four colour bands worked out from
+- Parts are drawn at real size â€” resistors carry their four colour bands worked out from
   the value, ceramics show their three-digit code, electrolytics are cans with the stripe
   on the negative side, diodes have the cathode band, LEDs have the flat. Leads stretch;
   bodies don't.
-- Polarised parts are marked on the board itself: `A —[ body ]— K` beside a diode or
-  LED, `+` and `−` on an electrolytic, always on the side the lead actually landed.
+- Polarised parts are marked on the board itself: `A â€”[ body ]â€” K` beside a diode or
+  LED, `+` and `âˆ’` on an electrolytic, always on the side the lead actually landed.
 
 ## Hand-laid boards
 
@@ -257,36 +282,38 @@ you'd plan it on paper.
 
 `app/handlaid.py` checks every hole before anything goes in it, keeps each strip to one
 net, routes whatever the plan left unjoined, drops supply and ground strips to their
-rails, and verifies the result. A plan that doesn't fit — because someone picked a
-different chip, say — is dropped and the automatic layout is used instead.
+rails, and verifies the result. A plan that doesn't fit â€” because someone picked a
+different chip, say â€” is dropped and the automatic layout is used instead.
 
 ## Files
 
 | Path | What it is |
 | --- | --- |
 | `app/breadboard.py` | The connectivity model: holes, strips, rails, and the verifier |
-| `app/packages.py` | Package library — op-amps (incl. OP484), 555, 74HCxx, regulators, TO-92, diodes |
-| `app/values.py` | "10k" → 10000 Ω → brown-black-orange-gold; capacitor codes and body styles |
+| `app/packages.py` | Package library â€” op-amps (incl. OP484), 555, 74HCxx, regulators, TO-92, diodes |
+| `app/values.py` | "10k" â†’ 10000 Î© â†’ brown-black-orange-gold; capacitor codes and body styles |
 | `app/flow.py` | Schematic-shaped placement (the default): net ranking, block ordering, rail-mounted parts |
 | `app/sources.py` | Bench instruments: which sources get a rail, where each lead clips on, hook-up steps |
 | `app/gates.py` | Puts op-amps drawn one at a time into shared dual and quad chips |
 | `app/handlaid.py` | Places a board from a hand-made plan, checking every hole |
-| `app/quality.py` | Scores a layout's wiring — diagonals, crossings, wires over parts — to pick the cleanest |
-| `app/placer.py` | Packed placement, routing, build order — and the fallback when flow can't fit |
-| `app/llm.py` | The one model call: image → netlist, via a tool schema |
+| `app/quality.py` | Scores a layout's wiring â€” diagonals, crossings, wires over parts â€” to pick the cleanest |
+| `app/placer.py` | Packed placement, routing, build order â€” and the fallback when flow can't fit |
+| `app/llm.py` | The one model call: image â†’ netlist, via a tool schema |
 | `app/models.py` | Pydantic types shared by all of the above |
 | `app/main.py` | FastAPI routes |
 | `app/cli.py` | Terminal entry point |
-| `static/breadboard.js` | Layout → SVG, whole or partway through the build. Runs in browser and node |
+| `static/breadboard.js` | Layout â†’ SVG, whole or partway through the build. Runs in browser and node |
 | `static/pinout.js` | Datasheet-style pinout drawings, generated from package data |
 | `static/about.html` | About page: purpose, how to learn with it, credits |
 | `static/app.js` | Upload, package picker, custom pinouts, timeline, hover, net highlighting |
+| `static/editor.js` | The LTspice-style drawing editor |
+| `static/schematic.js` | Editor symbols, connectivity, drawing â†’ netlist and SPICE |
 | `examples/*.json` | Netlists to work against with no API key |
 | `tests/` | pytest suite over the model, the pinouts and the verifier |
 
 ## Testing the model
 
-The 170 tests run with no API key and no network:
+The 173 tests run with no API key and no network:
 
 ```bash
 python3 -m pytest -q
@@ -296,7 +323,7 @@ python3 -m pytest -q
 image and hint are sent correctly, that a tool-use reply becomes a `Netlist`, that a
 chatty reply or a malformed netlist raises instead of being half-placed, and that the
 tool schema lists every component kind the app knows about. What it cannot tell you is
-whether the model can *read your schematics* — only a real call answers that.
+whether the model can *read your schematics* â€” only a real call answers that.
 
 **Without a key**, click through the whole flow with a stored netlist standing in for the
 model:
@@ -306,8 +333,8 @@ $env:BREADBOARD_FAKE_LLM="1"; .venv\Scripts\python.exe run.py
 ```
 
 Upload anything, and `/api/parse` returns the equalizer netlist with a loud warning
-saying it did not come from your file. Everything after that point — the part questions,
-placement, the board, the timeline — is the real thing.
+saying it did not come from your file. Everything after that point â€” the part questions,
+placement, the board, the timeline â€” is the real thing.
 
 **With a key**, the cheapest real check is one call from the terminal:
 
@@ -321,7 +348,7 @@ handful of your own LTspice exports is the right first spend.
 
 ## Putting it on GitHub
 
-GitHub stores the code. It does **not** run it — this is a Python server with an API key,
+GitHub stores the code. It does **not** run it â€” this is a Python server with an API key,
 so GitHub Pages (static files only) can't host it.
 
 Publishing the code:
@@ -336,16 +363,16 @@ git push -u origin main
 ```
 
 Create the empty repo on github.com first (no README, so it doesn't conflict).
-`.gitignore` already excludes `.env` and `.venv` — check `git status` before the first
+`.gitignore` already excludes `.env` and `.venv` â€” check `git status` before the first
 commit and make sure `.env` isn't in the list. **A key pushed to a public repo is
 compromised within minutes**; if it happens, revoke it in the console rather than
 deleting the commit.
 
-Running it somewhere other than your laptop needs a host that executes Python — Render,
+Running it somewhere other than your laptop needs a host that executes Python â€” Render,
 Railway, Fly.io and Hugging Face Spaces all have free or near-free tiers. The shape is
 the same everywhere: point the host at the repo, set the start command to
 `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and add `ANTHROPIC_API_KEY` as a
-secret in the host's settings — never in the repo.
+secret in the host's settings â€” never in the repo.
 
 One thing worth knowing before you make it public: every schematic a stranger uploads
 spends *your* credits. Keep it private, put a password in front of it, or add a rate
@@ -361,18 +388,18 @@ limit before sharing the link widely.
 - Headers, crystals and SIP packages aren't in the library yet; add them to
   `packages.py` and they flow through everything else. In the meantime, "My own part"
   covers anything with a DIP, TO-92 or TO-220 footprint.
-- Outputs (a speaker, a scope probe) aren't drawn as instruments yet — only sources.
+- Outputs (a speaker, a scope probe) aren't drawn as instruments yet â€” only sources.
 - Pinouts in the library are the common ones, but second sources differ. Every pinout is
   shown before anything is placed precisely so you can check it against the datasheet.
 - Jumper routing is a nearest-neighbour chain, not a shortest-total-length solve. It's
   correct, not optimal.
 - The model reads what it can see. A smudged value or a wire that passes behind a symbol
-  comes back as a warning, not a silent guess — read the warnings before you build.
+  comes back as a warning, not a silent guess â€” read the warnings before you build.
 
 ## Next, in rough order
 
-1. The built-in schematic editor from the spec: draw in SPICE format, no analysis, feed
-   the same Netlist straight into the placer.
+1. ~~The built-in schematic editor~~ â€” done, see [Drawing the schematic instead](#drawing-the-schematic-instead).
+   Next for it: import an LTspice `.asc` file into the editor.
 2. Smarter placement for big circuits: choose which op-amp goes in which section, and
    which way round each chip faces, by searching for the shortest wiring.
 3. Output markers (speaker, scope probe) next to the input clips.

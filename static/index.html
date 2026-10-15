@@ -27,6 +27,21 @@
     <main>
       <!-- ============================ INPUT ============================ -->
       <div class="pane" id="pane-input">
+        <div class="seg input-mode" role="group" aria-label="How to enter the circuit">
+          <button class="ghost seg-btn active" id="mode-upload" data-mode="upload">Upload a screenshot</button>
+          <button class="ghost seg-btn" id="mode-draw" data-mode="draw">Draw the schematic</button>
+        </div>
+
+        <section class="card wide" id="step-draw" hidden>
+          <h2><span class="step">1</span> Draw the schematic</h2>
+          <p class="hint">
+            Draw it the way you would in LTspice: place parts, wire pin to pin, add ground and
+            name nets with labels. No simulation. The drawing becomes a netlist directly, so
+            nothing gets guessed.
+          </p>
+          <div id="editor"></div>
+        </section>
+
         <section class="card" id="step-input">
           <h2><span class="step">1</span> Load a schematic</h2>
 
