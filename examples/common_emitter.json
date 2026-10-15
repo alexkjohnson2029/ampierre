@@ -1,0 +1,109 @@
+{
+  "title": "Common-emitter amplifier (2N3904)",
+  "nets": [
+    {
+      "name": "VCC",
+      "role": "supply_positive",
+      "voltage": "+9 V"
+    },
+    {
+      "name": "GND",
+      "role": "ground",
+      "voltage": "0 V"
+    }
+  ],
+  "components": [
+    {
+      "ref": "Q1",
+      "kind": "npn",
+      "value": "2N3904",
+      "package": "to92_ebc_npn",
+      "pins": {
+        "B": "VB",
+        "C": "VC",
+        "E": "VE"
+      }
+    },
+    {
+      "ref": "R1",
+      "kind": "resistor",
+      "value": "47k",
+      "pins": {
+        "1": "VCC",
+        "2": "VB"
+      }
+    },
+    {
+      "ref": "R2",
+      "kind": "resistor",
+      "value": "10k",
+      "pins": {
+        "1": "VB",
+        "2": "GND"
+      }
+    },
+    {
+      "ref": "RC",
+      "kind": "resistor",
+      "value": "2.2k",
+      "pins": {
+        "1": "VCC",
+        "2": "VC"
+      }
+    },
+    {
+      "ref": "RE",
+      "kind": "resistor",
+      "value": "470",
+      "pins": {
+        "1": "VE",
+        "2": "GND"
+      }
+    },
+    {
+      "ref": "CE",
+      "kind": "polarized_capacitor",
+      "value": "100uF",
+      "package": "radial_electrolytic",
+      "pins": {
+        "+": "VE",
+        "-": "GND"
+      }
+    },
+    {
+      "ref": "CIN",
+      "kind": "capacitor",
+      "value": "1uF",
+      "pins": {
+        "1": "VIN",
+        "2": "VB"
+      }
+    },
+    {
+      "ref": "COUT",
+      "kind": "capacitor",
+      "value": "1uF",
+      "pins": {
+        "1": "VC",
+        "2": "VOUT"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "ref": "V1",
+      "kind": "dc",
+      "pos": "VCC",
+      "neg": "GND",
+      "value": "9V",
+      "purpose": "power"
+    },
+    {
+      "ref": "V2",
+      "kind": "signal",
+      "pos": "VIN",
+      "neg": "GND",
+      "value": "1 kHz sine, 20 mV peak"
+    }
+  ]
+}

@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>About AMPierre</title>
+    <meta
+      name="description"
+      content="AMPierre helps new engineers learn electrical engineering fundamentals by turning schematics into step-by-step breadboard builds."
+    />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body class="page-about">
+    <header class="top">
+      <a class="brand" href="/">
+        <div class="mark" aria-hidden="true">A</div>
+        <div>
+          <h1>AMPierre</h1>
+          <p class="tagline">Schematic in, breadboard out.</p>
+        </div>
+      </a>
+      <p class="blurb">
+        A learning tool for getting from a circuit on paper to a circuit on the bench.
+      </p>
+      <a class="ghost" href="/">← Back to the app</a>
+    </header>
+
+    <main class="about">
+      <section class="about-hero">
+        <p class="eyebrow">About</p>
+        <h2>From schematic to breadboard, one part at a time.</h2>
+        <p class="lead">
+          AMPierre helps new engineers learn the fundamentals of electrical engineering at the
+          point where they most often get stuck: turning a circuit drawn on paper into a
+          circuit wired on a breadboard. Give it a schematic and it shows you where every part
+          goes, which way round it faces, and every wire you'll need, then walks you through
+          the build one step at a time.
+        </p>
+      </section>
+
+      <section class="about-story">
+        <h3>Why it exists</h3>
+        <p>
+          AMPierre started in the lab. As a teaching assistant for Electric Circuits, I saw
+          students who could work through a circuit on paper struggle to turn it into
+          breadboard wiring. Analysing a circuit and building one are two different skills,
+          and the second is rarely taught head-on: which holes are connected underneath, which
+          way a part has to face, why a wire has to cross the middle of the board.
+        </p>
+        <p>
+          I built AMPierre to help young students across that gap. It is the walkthrough I'd
+          give at the bench, available to anyone, any time they're stuck.
+        </p>
+      </section>
+
+      <section class="about-learn">
+        <h3>What it teaches</h3>
+        <div class="learn-grid">
+          <article class="learn-card learn-wide">
+            <div>
+              <h4>How a breadboard is wired inside</h4>
+              <p>
+                Every hole belongs to a hidden strip of metal. Five holes in a column form one
+                strip; the channel down the middle splits the board into two halves that are
+                <em>not</em> connected; the rails along the edges run the full length of the
+                board and carry power and ground. Once that picture clicks, every layout makes
+                sense.
+              </p>
+            </div>
+            <svg
+              class="primer"
+              viewBox="0 0 380 350"
+              role="img"
+              aria-labelledby="primer-title"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <title id="primer-title">
+                Diagram of a breadboard section: five holes in a column form one connected
+                strip, the centre channel separates the two halves, and the rails run along the
+                edges.
+              </title>
+              <rect x="10" y="6" width="236" height="338" class="pr-board" />
+              <!-- rails -->
+              <line x1="18" y1="14" x2="238" y2="14" class="pr-rail pos" />
+              <line x1="18" y1="56" x2="238" y2="56" class="pr-rail neg" />
+              <line x1="18" y1="296" x2="238" y2="296" class="pr-rail neg" />
+              <line x1="18" y1="336" x2="238" y2="336" class="pr-rail pos" />
+              <g class="pr-holes">
+                <!-- rail holes: two rows at the top, two at the bottom -->
+                <g id="rail-row">
+                  <rect x="31" y="22" width="8" height="8" /><rect x="53" y="22" width="8" height="8" />
+                  <rect x="75" y="22" width="8" height="8" /><rect x="97" y="22" width="8" height="8" />
+                  <rect x="119" y="22" width="8" height="8" /><rect x="163" y="22" width="8" height="8" />
+                  <rect x="185" y="22" width="8" height="8" /><rect x="207" y="22" width="8" height="8" />
+                </g>
+                <use href="#rail-row" y="16" />
+                <use href="#rail-row" y="280" />
+                <use href="#rail-row" y="296" />
+              </g>
+              <!-- highlighted top rail -->
+              <rect x="27" y="18" width="192" height="16" class="pr-hl-rail" />
+              <g class="pr-holes">
+                <g id="strip-row">
+                  <rect x="31" y="74" width="8" height="8" /><rect x="53" y="74" width="8" height="8" />
+                  <rect x="75" y="74" width="8" height="8" /><rect x="97" y="74" width="8" height="8" />
+                  <rect x="119" y="74" width="8" height="8" /><rect x="141" y="74" width="8" height="8" />
+                  <rect x="163" y="74" width="8" height="8" /><rect x="185" y="74" width="8" height="8" />
+                  <rect x="207" y="74" width="8" height="8" />
+                </g>
+                <use href="#strip-row" y="20" /><use href="#strip-row" y="40" />
+                <use href="#strip-row" y="60" /><use href="#strip-row" y="80" />
+                <use href="#strip-row" y="124" /><use href="#strip-row" y="144" />
+                <use href="#strip-row" y="164" /><use href="#strip-row" y="184" />
+                <use href="#strip-row" y="204" />
+              </g>
+              <!-- channel -->
+              <rect x="10" y="168" width="236" height="22" class="pr-channel" />
+              <!-- highlighted strips -->
+              <rect x="71" y="70" width="16" height="96" class="pr-hl" />
+              <rect x="159" y="194" width="16" height="96" class="pr-hl alt" />
+
+              <!-- callouts -->
+              <line x1="219" y1="26" x2="256" y2="26" class="pr-lead" />
+              <text x="262" y="22" class="pr-note">Rails run the</text>
+              <text x="262" y="36" class="pr-note">whole length</text>
+
+              <line x1="87" y1="118" x2="256" y2="104" class="pr-lead" />
+              <text x="262" y="100" class="pr-note">These 5 holes are</text>
+              <text x="262" y="114" class="pr-note">one connection</text>
+
+              <line x1="246" y1="179" x2="256" y2="179" class="pr-lead" />
+              <text x="262" y="175" class="pr-note">The channel splits</text>
+              <text x="262" y="189" class="pr-note">the two halves</text>
+
+              <line x1="175" y1="242" x2="256" y2="250" class="pr-lead" />
+              <text x="262" y="246" class="pr-note">A separate strip —</text>
+              <text x="262" y="260" class="pr-note">not joined to the</text>
+              <text x="262" y="274" class="pr-note">one above it</text>
+            </svg>
+          </article>
+
+          <article class="learn-card">
+            <h4>Nets: what “connected” really means</h4>
+            <p>
+              A net is every point in a circuit that must be the same electrical node. Hover any
+              part and AMPierre lights up everything else on its net. That is exactly what you'd
+              check with a multimeter, and it's how you catch a missing jumper or a short.
+            </p>
+          </article>
+
+          <article class="learn-card">
+            <h4>Which way round</h4>
+            <p>
+              Diodes have a cathode band, electrolytic capacitors a stripe, LEDs a flat edge,
+              ICs a notch beside pin&nbsp;1, and transistors a flat face. Polarised parts are
+              marked right on the board, on the side each lead actually goes.
+            </p>
+          </article>
+
+          <article class="learn-card">
+            <h4>Reading real parts</h4>
+            <p>
+              Resistors are drawn with their colour bands, ceramic capacitors with their
+              three-digit code, and every chip and transistor comes with a pinout diagram, so
+              you learn to find the right part in the drawer, not only in the drawing.
+            </p>
+          </article>
+
+          <article class="learn-card">
+            <h4>Building with a method</h4>
+            <p>
+              Power off. Chips and transistors first, then the parts around them, then the
+              wires, and the supply last. Check continuity before you switch on. The build
+              timeline follows that order, one step at a time.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="about-how">
+        <div>
+          <h3>Learning with it</h3>
+          <ol class="tips">
+            <li>
+              <strong>Build it yourself.</strong> Use the timeline under the board to place one
+              part or wire at a time on your own breadboard.
+            </li>
+            <li>
+              <strong>Predict before you look.</strong> Before each step, guess which holes the
+              part goes in. Then check.
+            </li>
+            <li>
+              <strong>Check every node.</strong> Hover a part to see its net, then confirm it on
+              your board with a multimeter's continuity setting.
+            </li>
+            <li>
+              <strong>Start Spacious, then go Compact.</strong> Spacious leaves room to trace
+              every lead by eye; Compact is closer to how a finished board looks.
+            </li>
+            <li>
+              <strong>Trust the datasheet.</strong> Pinouts can differ between manufacturers of
+              the same part. AMPierre shows the common one; the datasheet has the final say.
+            </li>
+          </ol>
+        </div>
+        <div>
+          <h3>How it works</h3>
+          <p>
+            An AI model reads your schematic and lists what connects to what. Everything after
+            that is ordinary code: it lays the parts out to follow the schematic, with parts
+            hanging from the supply rail, the transistors and chips in the middle and parts
+            standing on the ground rail, then lays every jumper flat along a row or straight
+            down a column so none of them overlap. The rare jumper that has to go corner to
+            corner is drawn arched, hopping over the board like a real flexible wire. It
+            shows where the bench supply and the wave generator clip on, and it checks every
+            connection before showing you anything, so the board you see is electrically the
+            circuit you drew.
+          </p>
+          <p>
+            AMPierre isn't a simulator. It shows you how to <em>build</em> a circuit, not
+            whether the circuit does what you want.
+          </p>
+        </div>
+      </section>
+
+      <section class="featured">
+        <p class="eyebrow">Featured build</p>
+        <h3>AJ's three-band audio equalizer</h3>
+        <p>
+          One of my own projects, and the biggest circuit that ships with AMPierre. I designed
+          and simulated it in LTspice, then built it on a breadboard. An input amp feeds three
+          filters (bass, mid and treble), each with its own knob. Three buffers keep the
+          filters from loading each other, a summing amplifier mixes the bands back together,
+          and a peak detector and comparator light an LED when the output gets close to
+          clipping.
+        </p>
+        <ul class="project-facts">
+          <li>8 op-amps in two OP484s</li>
+          <li>4 trimmer pots</li>
+          <li>34 parts</li>
+          <li>±4.5 V supply</li>
+        </ul>
+        <a class="featured-board" id="featured-board" href="/?example=three_band_equalizer"
+          aria-label="Open the equalizer in AMPierre"></a>
+        <a class="primary-link" href="/?example=three_band_equalizer">Open it in AMPierre →</a>
+      </section>
+
+      <section class="credit">
+        <div class="credit-mark" aria-hidden="true">AJ</div>
+        <div class="credit-body">
+          <p class="eyebrow">Created by</p>
+          <h3>Alexander Kim Johnson</h3>
+          <p>
+            Electrical engineering student at Rensselaer Polytechnic Institute and teaching
+            assistant for Electric Circuits. I built AMPierre for the students I work with in
+            lab, and for anyone learning to build circuits for the first time.
+          </p>
+          <a
+            class="primary-link"
+            href="https://www.linkedin.com/in/alex-kim-johnson/"
+            target="_blank"
+            rel="noopener"
+            >Connect on LinkedIn →</a
+          >
+        </div>
+      </section>
+
+      <footer class="about-foot">
+        <p>
+          AMPierre is a learning tool. Always check pinouts against the part's datasheet, and
+          wire with the power off.
+        </p>
+        <p>
+          For developers: <a href="/docs" target="_blank" rel="noopener">API reference</a>
+        </p>
+      </footer>
+    </main>
+    <script type="module">
+      /* A live preview of the featured build: the same board the app draws. */
+      import { renderBoard } from "/static/breadboard.js";
+      const host = document.getElementById("featured-board");
+      try {
+        const ex = await (await fetch("/api/examples/three_band_equalizer")).json();
+        const res = await fetch("/api/place", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ netlist: ex.netlist, style: "flow" }),
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        host.innerHTML = renderBoard(await res.json());
+      } catch {
+        host.hidden = true; // the text and the link still say it all
+      }
+    </script>
+  </body>
+</html>

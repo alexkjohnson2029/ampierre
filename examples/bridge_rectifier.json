@@ -1,0 +1,118 @@
+{
+  "title": "Full-wave bridge rectifier with smoothing",
+  "nets": [
+    {
+      "name": "VDC",
+      "role": "output"
+    },
+    {
+      "name": "GND",
+      "role": "ground",
+      "voltage": "0 V"
+    },
+    {
+      "name": "AC1",
+      "role": "input"
+    },
+    {
+      "name": "AC2",
+      "role": "input"
+    }
+  ],
+  "components": [
+    {
+      "ref": "D1",
+      "kind": "diode",
+      "value": "1N4007",
+      "package": "axial_diode",
+      "pins": {
+        "A": "AC1",
+        "K": "VDC"
+      },
+      "notes": "Conducts on the half-cycle where AC1 is positive."
+    },
+    {
+      "ref": "D2",
+      "kind": "diode",
+      "value": "1N4007",
+      "package": "axial_diode",
+      "pins": {
+        "A": "AC2",
+        "K": "VDC"
+      }
+    },
+    {
+      "ref": "D3",
+      "kind": "diode",
+      "value": "1N4007",
+      "package": "axial_diode",
+      "pins": {
+        "A": "GND",
+        "K": "AC1"
+      }
+    },
+    {
+      "ref": "D4",
+      "kind": "diode",
+      "value": "1N4007",
+      "package": "axial_diode",
+      "pins": {
+        "A": "GND",
+        "K": "AC2"
+      }
+    },
+    {
+      "ref": "C1",
+      "kind": "polarized_capacitor",
+      "value": "470uF",
+      "package": "radial_electrolytic",
+      "pins": {
+        "+": "VDC",
+        "-": "GND"
+      },
+      "notes": "Smoothing cap. Backwards is the classic way to make one vent."
+    },
+    {
+      "ref": "RL",
+      "kind": "resistor",
+      "value": "1k",
+      "pins": {
+        "1": "VDC",
+        "2": "GND"
+      },
+      "notes": "Bleeder / load."
+    },
+    {
+      "ref": "R1",
+      "kind": "resistor",
+      "value": "330",
+      "pins": {
+        "1": "VDC",
+        "2": "LEDA"
+      }
+    },
+    {
+      "ref": "LED1",
+      "kind": "led",
+      "value": "red 5mm",
+      "package": "led_5mm",
+      "pins": {
+        "A": "LEDA",
+        "K": "GND"
+      },
+      "notes": "Power-on indicator."
+    }
+  ],
+  "warnings": [
+    "Wave generator only — never wire this to mains. The four diodes all face the same way round the loop, which is the part that is easy to get wrong."
+  ],
+  "sources": [
+    {
+      "ref": "V1",
+      "kind": "signal",
+      "pos": "AC1",
+      "neg": "AC2",
+      "value": "60 Hz sine, 10 V peak"
+    }
+  ]
+}

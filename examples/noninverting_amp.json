@@ -1,0 +1,108 @@
+{
+  "title": "Non-inverting amplifier, gain = 11 (TL072)",
+  "nets": [
+    {
+      "name": "V+",
+      "role": "supply_positive",
+      "voltage": "+9 V"
+    },
+    {
+      "name": "V-",
+      "role": "supply_negative",
+      "voltage": "-9 V"
+    },
+    {
+      "name": "GND",
+      "role": "ground",
+      "voltage": "0 V"
+    },
+    {
+      "name": "VIN",
+      "role": "input"
+    },
+    {
+      "name": "VOUT",
+      "role": "output"
+    }
+  ],
+  "components": [
+    {
+      "ref": "U1",
+      "kind": "opamp",
+      "value": "TL072",
+      "package": "dip8_dual_opamp",
+      "pins": {
+        "IN+A": "VIN",
+        "IN-A": "FB",
+        "OUT A": "VOUT",
+        "V+": "V+",
+        "V-": "V-"
+      }
+    },
+    {
+      "ref": "R1",
+      "kind": "resistor",
+      "value": "1k",
+      "package": "axial_resistor",
+      "pins": {
+        "1": "FB",
+        "2": "GND"
+      }
+    },
+    {
+      "ref": "R2",
+      "kind": "resistor",
+      "value": "10k",
+      "package": "axial_resistor",
+      "pins": {
+        "1": "VOUT",
+        "2": "FB"
+      }
+    },
+    {
+      "ref": "C1",
+      "kind": "capacitor",
+      "value": "100nF",
+      "package": "radial_ceramic",
+      "pins": {
+        "1": "V+",
+        "2": "GND"
+      }
+    },
+    {
+      "ref": "C2",
+      "kind": "capacitor",
+      "value": "100nF",
+      "package": "radial_ceramic",
+      "pins": {
+        "1": "V-",
+        "2": "GND"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "ref": "V1",
+      "kind": "dc",
+      "pos": "V+",
+      "neg": "GND",
+      "value": "9V",
+      "purpose": "power"
+    },
+    {
+      "ref": "V2",
+      "kind": "dc",
+      "pos": "GND",
+      "neg": "V-",
+      "value": "9V",
+      "purpose": "power"
+    },
+    {
+      "ref": "V3",
+      "kind": "signal",
+      "pos": "VIN",
+      "neg": "GND",
+      "value": "1 kHz sine, 0.5 V peak"
+    }
+  ]
+}

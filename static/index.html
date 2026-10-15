@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AMPierre — schematic to breadboard</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">A</div>
+        <div>
+          <h1>AMPierre</h1>
+          <p class="tagline">Schematic in, breadboard out.</p>
+        </div>
+      </div>
+      <p class="blurb">
+        Hand it a screenshot from LTspice, PSpice or KiCad. It reads what connects to what,
+        then works out where every part sits on a real 830-point board — which holes, which
+        way round, and every jumper you have to cut — and walks you through building it one
+        step at a time.
+      </p>
+      <a class="ghost" href="/about">About</a>
+    </header>
+
+    <main>
+      <!-- ============================ INPUT ============================ -->
+      <div class="pane" id="pane-input">
+        <section class="card" id="step-input">
+          <h2><span class="step">1</span> Load a schematic</h2>
+
+          <div class="drop" id="drop">
+            <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+            <p><strong>Drop a schematic screenshot here</strong></p>
+            <p class="hint">or <button class="link" id="browse">choose a file</button> — PNG, JPEG or WebP</p>
+            <img id="preview" alt="" hidden />
+          </div>
+
+          <label class="field">
+            <span>Anything the screenshot doesn't say (optional)</span>
+            <input
+              id="hint"
+              type="text"
+              placeholder="e.g. U1 is a TL072, supply is ±9 V, ignore the .tran line"
+            />
+          </label>
+
+          <details class="alt">
+            <summary>…or paste a SPICE netlist instead</summary>
+            <textarea id="spice" rows="6" placeholder="* my circuit&#10;R1 in out 10k&#10;C1 out 0 100n"></textarea>
+          </details>
+
+          <div class="row">
+            <button class="primary" id="parse">Read the schematic</button>
+            <span class="hint" id="examples-label">or start from an example:</span>
+            <span id="examples"></span>
+          </div>
+          <p class="error" id="parse-error" hidden></p>
+        </section>
+
+        <section class="card" id="step-parts" hidden>
+          <h2><span class="step">2</span> Pick the real parts</h2>
+          <p class="hint">
+            A schematic symbol doesn't have a pinout — the package does. Choose what you're
+            actually putting in the board; everything downstream depends on it.
+          </p>
+          <div id="questions"></div>
+          <div class="row">
+            <button class="primary" id="build">Build the board</button>
+            <span class="hint" id="netsummary"></span>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============================ BOARD ============================ -->
+      <div class="pane" id="pane-board" hidden>
+        <section class="card wide" id="step-board" hidden>
+          <div class="board-head">
+            <h2 id="board-title">Breadboard</h2>
+            <div class="row tight">
+              <span class="seg" role="group" aria-label="Layout style">
+                <button class="ghost seg-btn active" id="style-flow" data-style="flow"
+                  title="Parts spread out, one net per column — easiest to trace">Spacious</button>
+                <button class="ghost seg-btn" id="style-compact" data-style="flow-compact"
+                  title="Same shape, packed into fewer columns">Compact</button>
+              </span>
+              <button class="ghost" id="download">Download SVG</button>
+              <button class="ghost" id="restart">Start over</button>
+            </div>
+          </div>
+          <aside class="project-card" id="project-card" hidden></aside>
+          <div class="board-scroll" id="board"></div>
+
+          <div class="timeline" id="timeline">
+            <div class="tl-head">
+              <div class="tl-controls">
+                <button class="ghost" id="tl-prev" title="Previous step">←</button>
+                <button class="ghost" id="tl-play" title="Play through the build">▶ Play</button>
+                <button class="ghost" id="tl-next" title="Next step">→</button>
+                <button class="ghost" id="tl-all">Show whole board</button>
+              </div>
+              <div class="tl-right">
+                <label class="tl-mode" title="Show what's still to come, faintly, where it will go">
+                  <input type="checkbox" id="tl-ghost" /> Ghost upcoming parts
+                </label>
+                <span class="tl-count" id="tl-count"></span>
+              </div>
+            </div>
+            <input type="range" id="tl-range" min="0" max="0" value="0" />
+            <div class="tl-now">
+              <p class="tl-text" id="tl-text">Drag the slider, or press Play, to build the board one part at a time.</p>
+              <p class="tl-detail" id="tl-detail"></p>
+            </div>
+            <div class="tl-strip" id="tl-strip"></div>
+          </div>
+
+          <p class="hint legend">
+            Hover anything: rails show their supply, ICs and transistors show their pinout and
+            which way round they go, passives show their value and colour code. Hovering also
+            lights up everything else on the same net — every point the circuit treats as one
+            electrical node.
+          </p>
+
+          <div class="panels">
+            <div class="panel">
+              <h3>Parts</h3>
+              <table id="bom"></table>
+            </div>
+            <div class="panel">
+              <h3>Build order</h3>
+              <ol id="steps"></ol>
+            </div>
+          </div>
+          <div class="panel warn" id="warnbox" hidden>
+            <h3>Check these</h3>
+            <ul id="warnings"></ul>
+          </div>
+        </section>
+
+        <p class="empty" id="board-empty">
+          No board yet — load a schematic or an example on the Input tab, then press
+          “Build the board”.
+        </p>
+      </div>
+    </main>
+
+    <!-- always-on tab bar, pinned to the bottom of the window -->
+    <nav class="tabbar" id="tabbar">
+      <button class="tab active" id="tab-input" data-pane="input">
+        <span class="tab-n">1</span> Input<span class="tab-sub">schematic &amp; parts</span>
+      </button>
+      <button class="tab" id="tab-board" data-pane="board" disabled>
+        <span class="tab-n">2</span> Board<span class="tab-sub" id="tab-board-sub">nothing built yet</span>
+      </button>
+    </nav>
+
+    <div id="tooltip" class="tooltip" hidden></div>
+    <div id="busy" class="busy" hidden><span></span><em id="busy-text">working…</em></div>
+
+    <script type="module" src="/static/app.js"></script>
+  </body>
+</html>

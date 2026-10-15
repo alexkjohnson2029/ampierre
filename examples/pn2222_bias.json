@@ -1,0 +1,79 @@
+{
+  "title": "PN2222 common-emitter bias network",
+  "nets": [
+    {
+      "name": "VCC",
+      "role": "supply_positive"
+    },
+    {
+      "name": "GND",
+      "role": "ground",
+      "voltage": "0 V"
+    }
+  ],
+  "components": [
+    {
+      "ref": "Q1",
+      "kind": "npn",
+      "value": "PN2222",
+      "package": "to92_ebc_npn",
+      "pins": {
+        "B": "VB",
+        "C": "VC",
+        "E": "VE"
+      }
+    },
+    {
+      "ref": "R1",
+      "kind": "resistor",
+      "value": "10k",
+      "pins": {
+        "1": "VCC",
+        "2": "VB"
+      },
+      "notes": "Upper half of the base divider."
+    },
+    {
+      "ref": "R2",
+      "kind": "resistor",
+      "value": "10k",
+      "pins": {
+        "1": "VB",
+        "2": "GND"
+      },
+      "notes": "Lower half of the base divider."
+    },
+    {
+      "ref": "RC",
+      "kind": "resistor",
+      "value": "1k",
+      "pins": {
+        "1": "VCC",
+        "2": "VC"
+      }
+    },
+    {
+      "ref": "RE",
+      "kind": "resistor",
+      "value": "1k",
+      "pins": {
+        "1": "VE",
+        "2": "GND"
+      }
+    }
+  ],
+  "warnings": [
+    "The schematic shows the DC bias network only — no input or output coupling capacitors, and no supply voltage marked on Vcc.",
+    "PN2222 in TO-92 is E–B–C with the flat face toward you. A 2N2222 in a metal TO-18 can is a different package; check what you actually have."
+  ],
+  "sources": [
+    {
+      "ref": "V1",
+      "kind": "dc",
+      "pos": "VCC",
+      "neg": "GND",
+      "value": null,
+      "purpose": "power"
+    }
+  ]
+}

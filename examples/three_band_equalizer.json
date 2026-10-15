@@ -1,0 +1,695 @@
+{
+  "title": "Three-band audio equalizer (2× OP484, ±4.5 V)",
+  "about": {
+    "badge": "AJ's build",
+    "eyebrow": "From the creator's projects",
+    "headline": "AJ's three-band audio equalizer",
+    "blurb": "Designed and simulated in LTspice by AMPierre's creator, then built on a breadboard. An input amp feeds three filters (bass, mid and treble), each with its own knob. The bands are buffered, mixed back together and amplified, and an LED lights when the output gets close to clipping. This is that circuit, laid out the way you'd build it.",
+    "facts": [
+      "8 op-amps in two OP484s",
+      "4 trimmer pots",
+      "34 parts",
+      "±4.5 V supply"
+    ],
+    "link": {
+      "href": "https://www.linkedin.com/in/alex-kim-johnson/",
+      "text": "Alexander Kim Johnson on LinkedIn"
+    }
+  },
+  "nets": [
+    {
+      "name": "V+",
+      "role": "supply_positive",
+      "voltage": "+4.5 V"
+    },
+    {
+      "name": "V-",
+      "role": "supply_negative",
+      "voltage": "−4.5 V"
+    },
+    {
+      "name": "GND",
+      "role": "ground",
+      "voltage": "0 V"
+    },
+    {
+      "name": "In",
+      "role": "input"
+    },
+    {
+      "name": "Out",
+      "role": "output"
+    },
+    {
+      "name": "Speaker",
+      "role": "output"
+    },
+    {
+      "name": "+3.375V",
+      "role": "signal",
+      "voltage": "3.375 V"
+    }
+  ],
+  "components": [
+    {
+      "ref": "IC1",
+      "kind": "opamp",
+      "value": "OP484",
+      "package": "dip14_quad_opamp",
+      "pins": {
+        "OUT B": "AmpIn",
+        "IN-B": "AmpFB",
+        "IN+B": "In",
+        "IN+A": "HP",
+        "IN-A": "HPbuf",
+        "OUT A": "HPbuf",
+        "OUT C": "BPbuf",
+        "IN-C": "BPbuf",
+        "IN+C": "BP",
+        "IN+D": "LP",
+        "IN-D": "LPbuf",
+        "OUT D": "LPbuf",
+        "V+": "V+",
+        "V-": "V-"
+      },
+      "notes": "Schematic U2–U5. B = U2, the input amp (gain 1 + 5.1k/1k = 6.1). A = U3, C = U4, D = U5: unity-gain buffers for the high, mid and low bands."
+    },
+    {
+      "ref": "IC2",
+      "kind": "opamp",
+      "value": "OP484",
+      "package": "dip14_quad_opamp",
+      "pins": {
+        "OUT B": "Speaker",
+        "IN-B": "Speaker",
+        "IN+B": "Out",
+        "IN+A": "Out",
+        "IN-A": "DC",
+        "OUT A": "DC",
+        "OUT C": "Out",
+        "IN-C": "OutFB",
+        "IN+C": "Sum",
+        "IN+D": "Compare",
+        "IN-D": "+3.375V",
+        "OUT D": "LED",
+        "V+": "V+",
+        "V-": "V-"
+      },
+      "notes": "Schematic U1, U8, U6, U7. B = U1, the speaker buffer. A = U8, the buffer feeding the peak detector. C = U6, the output amp (gain 1 + 300k/100k = 4). D = U7, the comparator that lights the LED."
+    },
+    {
+      "ref": "R6",
+      "kind": "resistor",
+      "value": "1k",
+      "pins": {
+        "1": "AmpFB",
+        "2": "GND"
+      }
+    },
+    {
+      "ref": "R7",
+      "kind": "resistor",
+      "value": "5.1k",
+      "pins": {
+        "1": "AmpFB",
+        "2": "AmpIn"
+      }
+    },
+    {
+      "ref": "R25",
+      "kind": "resistor",
+      "value": "100",
+      "pins": {
+        "1": "AmpIn",
+        "2": "FiltIn"
+      }
+    },
+    {
+      "ref": "C6",
+      "kind": "capacitor",
+      "value": "100n",
+      "pins": {
+        "1": "FiltIn",
+        "2": "GND"
+      },
+      "notes": "With R25: a 16 kHz low-pass ahead of the three filters."
+    },
+    {
+      "ref": "C1",
+      "kind": "capacitor",
+      "value": "10n",
+      "pins": {
+        "1": "FiltIn",
+        "2": "HP"
+      }
+    },
+    {
+      "ref": "R2",
+      "kind": "resistor",
+      "value": "1k",
+      "pins": {
+        "1": "HP",
+        "2": "HPadj"
+      }
+    },
+    {
+      "ref": "R5",
+      "kind": "resistor",
+      "value": "20k",
+      "pins": {
+        "1": "HPadj",
+        "2": "GND"
+      }
+    },
+    {
+      "ref": "RV1",
+      "kind": "potentiometer",
+      "value": "10k",
+      "package": "trimpot_inline",
+      "pins": {
+        "1": "HPadj",
+        "W": "GND"
+      },
+      "notes": "Replaces R3 (1 Ω) + R4 (10 kΩ) — how the LTspice model draws a 10 kΩ pot. Pin 3 stays unconnected, so it works as a 0–10 kΩ variable resistor between pin 1 and the wiper."
+    },
+    {
+      "ref": "C2",
+      "kind": "capacitor",
+      "value": "100n",
+      "pins": {
+        "1": "FiltIn",
+        "2": "BPin"
+      }
+    },
+    {
+      "ref": "R8",
+      "kind": "resistor",
+      "value": "1k",
+      "pins": {
+        "1": "BPin",
+        "2": "BPadj1"
+      }
+    },
+    {
+      "ref": "R11",
+      "kind": "resistor",
+      "value": "20k",
+      "pins": {
+        "1": "BPadj1",
+        "2": "GND"
+      }
+    },
+    {
+      "ref": "RV2",
+      "kind": "potentiometer",
+      "value": "10k",
+      "package": "trimpot_inline",
+      "pins": {
+        "3": "BPadj1",
+        "W": "GND"
+      },
+      "notes": "Replaces R9 (1 Ω) + R10 (10 kΩ) — how the LTspice model draws a 10 kΩ pot. Wired between the wiper and pin 3 (pin 1 stays unconnected): the same 0–10 kΩ variable resistor, turned the other way round so it fits beside R8 and R11."
+    },
+    {
+      "ref": "R12",
+      "kind": "resistor",
+      "value": "3.3k",
+      "pins": {
+        "1": "BPin",
+        "2": "BPadj2"
+      }
+    },
+    {
+      "ref": "R15",
+      "kind": "resistor",
+      "value": "20k",
+      "pins": {
+        "1": "BPadj2",
+        "2": "BP"
+      }
+    },
+    {
+      "ref": "RV3",
+      "kind": "potentiometer",
+      "value": "10k",
+      "package": "trimpot_inline",
+      "pins": {
+        "1": "BPadj2",
+        "W": "BP"
+      },
+      "notes": "Replaces R13 (10 kΩ) + R14 (1 Ω) — how the LTspice model draws a 10 kΩ pot. Pin 3 stays unconnected, so it works as a 0–10 kΩ variable resistor between pin 1 and the wiper."
+    },
+    {
+      "ref": "C3",
+      "kind": "capacitor",
+      "value": "25n",
+      "pins": {
+        "1": "BP",
+        "2": "GND"
+      },
+      "notes": "25 nF isn't a stock value: 22 nF with 3.3 nF in parallel makes 25.3 nF, or use 22 nF alone (the mid band moves up about 14%)."
+    },
+    {
+      "ref": "R16",
+      "kind": "resistor",
+      "value": "4k",
+      "pins": {
+        "1": "FiltIn",
+        "2": "LPadj"
+      },
+      "notes": "4 kΩ isn't a stock value: 3.9 kΩ (orange-white-red) is the nearest."
+    },
+    {
+      "ref": "R19",
+      "kind": "resistor",
+      "value": "15k",
+      "pins": {
+        "1": "LPadj",
+        "2": "LP"
+      }
+    },
+    {
+      "ref": "RV4",
+      "kind": "potentiometer",
+      "value": "10k",
+      "package": "trimpot_inline",
+      "pins": {
+        "1": "LPadj",
+        "W": "LP"
+      },
+      "notes": "Replaces R17 (10 kΩ) + R18 (1 Ω) — how the LTspice model draws a 10 kΩ pot. Pin 3 stays unconnected, so it works as a 0–10 kΩ variable resistor between pin 1 and the wiper."
+    },
+    {
+      "ref": "C5",
+      "kind": "capacitor",
+      "value": "200n",
+      "pins": {
+        "1": "LP",
+        "2": "GND"
+      },
+      "notes": "200 nF isn't a stock value: two 100 nF in parallel make exactly 200 nF, or use 220 nF."
+    },
+    {
+      "ref": "R22",
+      "kind": "resistor",
+      "value": "100k",
+      "pins": {
+        "1": "HPbuf",
+        "2": "Sum"
+      }
+    },
+    {
+      "ref": "R23",
+      "kind": "resistor",
+      "value": "100k",
+      "pins": {
+        "1": "BPbuf",
+        "2": "Sum"
+      }
+    },
+    {
+      "ref": "R24",
+      "kind": "resistor",
+      "value": "100k",
+      "pins": {
+        "1": "LPbuf",
+        "2": "Sum"
+      }
+    },
+    {
+      "ref": "R21",
+      "kind": "resistor",
+      "value": "100k",
+      "pins": {
+        "1": "OutFB",
+        "2": "GND"
+      }
+    },
+    {
+      "ref": "R20",
+      "kind": "resistor",
+      "value": "300k",
+      "pins": {
+        "1": "OutFB",
+        "2": "Out"
+      }
+    },
+    {
+      "ref": "D2",
+      "kind": "diode",
+      "value": "1N4148",
+      "package": "axial_1n4148",
+      "pins": {
+        "A": "DC",
+        "K": "Compare"
+      },
+      "notes": "The one diode of the D1–D4 bridge that does anything here: it charges C4 to the positive peaks of Out (minus ~0.6 V)."
+    },
+    {
+      "ref": "C4",
+      "kind": "polarized_capacitor",
+      "value": "100uF",
+      "package": "radial_electrolytic",
+      "pins": {
+        "+": "Compare",
+        "-": "GND"
+      },
+      "notes": "Holds the peak. With R1 it decays with a 10 s time constant, so the LED stays lit for a few seconds after a loud peak."
+    },
+    {
+      "ref": "R1",
+      "kind": "resistor",
+      "value": "100k",
+      "pins": {
+        "1": "Compare",
+        "2": "GND"
+      }
+    },
+    {
+      "ref": "R26",
+      "kind": "resistor",
+      "value": "1k",
+      "pins": {
+        "1": "V+",
+        "2": "+3.375V"
+      }
+    },
+    {
+      "ref": "R27",
+      "kind": "resistor",
+      "value": "3k",
+      "pins": {
+        "1": "+3.375V",
+        "2": "GND"
+      },
+      "notes": "With R26: 4.5 V × 3k / 4k = 3.375 V reference for the comparator."
+    },
+    {
+      "ref": "R28",
+      "kind": "resistor",
+      "value": "1k",
+      "pins": {
+        "1": "LED",
+        "2": "LEDA"
+      }
+    },
+    {
+      "ref": "D5",
+      "kind": "led",
+      "value": "red 5mm",
+      "package": "led_5mm",
+      "pins": {
+        "A": "LEDA",
+        "K": "GND"
+      },
+      "notes": "Lights when the output's peaks pass about 4 V — the output is close to clipping on the 4.5 V rail."
+    }
+  ],
+  "sources": [
+    {
+      "ref": "V3",
+      "kind": "dc",
+      "pos": "V+",
+      "neg": "GND",
+      "value": "4.5V",
+      "purpose": "power"
+    },
+    {
+      "ref": "V5",
+      "kind": "dc",
+      "pos": "V-",
+      "neg": "GND",
+      "value": "-4.5V",
+      "purpose": "power"
+    },
+    {
+      "ref": "V2",
+      "kind": "signal",
+      "pos": "In",
+      "neg": "GND",
+      "value": "audio (CircuitsTest1.wav in the sim) — a 1 kHz sine at 0.3 V peak to test"
+    }
+  ],
+  "warnings": [
+    "Pots: the LTspice model draws each 10 kΩ pot as a 1 Ω and a 10 kΩ resistor in series with one end left open (R3+R4, R9+R10, R13+R14, R17+R18). On the board each pair is one 10 kΩ trimmer, RV1–RV4: pin 1 and the wiper are used, pin 3 stays unconnected. Each knob moves its band's corner frequency.",
+    "Changed from the schematic: the D1–D4 bridge has both its AC-return corner and its − output corner on ground. That shorts D3, leaves D4 idle, and makes D1 clamp U8's output at −0.7 V on every negative half-cycle, holding U8 in current limit. Only D2 does useful work, so the board uses D2 alone — a half-wave peak detector into C4 and R1.",
+    "Op-amps: eight sections fill two OP484 quads. The 3.375 V LED threshold needs rail-to-rail outputs: a TL074 on ±4.5 V tops out near ±3 V, and the LED would never light.",
+    "Speaker: an op-amp output can't drive an 8 Ω speaker. Use headphones through a 100 Ω resistor, or a powered speaker or LM386 amplifier.",
+    "V6 (AC 1) isn't connected to anything on the schematic — it's left over from an AC sweep — so it isn't built."
+  ],
+  "layout": {
+    "note": "Laid out by hand: each band's filter sits beside its buffer, the three 100 kΩ summing resistors meet at one strip, and every jumper runs straight along a row or down a column. The app still checked every hole, added the supply drops and proved the board matches the circuit. Compact and Spacious show this same board.",
+    "parts": {
+      "IC1": {
+        "col": 21,
+        "flip": true
+      },
+      "IC2": {
+        "col": 49,
+        "flip": true
+      },
+      "R6": {
+        "1": "H22",
+        "2": "H17"
+      },
+      "R7": {
+        "1": "G22",
+        "2": "G18"
+      },
+      "R25": {
+        "1": "F18",
+        "2": "F14"
+      },
+      "C6": {
+        "1": "J14",
+        "2": "T-14"
+      },
+      "C2": {
+        "1": "G14",
+        "2": "G10"
+      },
+      "R8": {
+        "1": "A10",
+        "2": "A6"
+      },
+      "RV2": {
+        "1": "E4"
+      },
+      "R11": {
+        "1": "B6",
+        "2": "B2"
+      },
+      "R12": {
+        "1": "B10",
+        "2": "B14"
+      },
+      "RV3": {
+        "1": "E14"
+      },
+      "R15": {
+        "1": "A14",
+        "2": "A18"
+      },
+      "C3": {
+        "1": "C18",
+        "2": "C20"
+      },
+      "C1": {
+        "1": "J33",
+        "2": "J35"
+      },
+      "R2": {
+        "1": "I35",
+        "2": "I39"
+      },
+      "RV1": {
+        "1": "J39"
+      },
+      "R5": {
+        "1": "G39",
+        "2": "G44"
+      },
+      "R16": {
+        "1": "D33",
+        "2": "D37"
+      },
+      "RV4": {
+        "1": "A37"
+      },
+      "R19": {
+        "1": "E37",
+        "2": "E41"
+      },
+      "C5": {
+        "1": "A41",
+        "2": "B-41"
+      },
+      "R22": {
+        "1": "G27",
+        "2": "G32"
+      },
+      "R23": {
+        "1": "D28",
+        "2": "D32"
+      },
+      "R24": {
+        "1": "A27",
+        "2": "A32"
+      },
+      "R20": {
+        "1": "C50",
+        "2": "C47"
+      },
+      "R21": {
+        "1": "A50",
+        "2": "A46"
+      },
+      "D2": {
+        "A": "H55",
+        "K": "H59"
+      },
+      "C4": {
+        "+": "J59",
+        "-": "T-59"
+      },
+      "R1": {
+        "1": "I59",
+        "2": "I62"
+      },
+      "R26": {
+        "1": "T+56",
+        "2": "I56"
+      },
+      "R27": {
+        "1": "G56",
+        "2": "G60"
+      },
+      "R28": {
+        "1": "B55",
+        "2": "B60"
+      },
+      "D5": {
+        "A": "A60",
+        "K": "B-60"
+      }
+    },
+    "wires": [
+      [
+        "J21",
+        "J18"
+      ],
+      [
+        "I14",
+        "I33"
+      ],
+      [
+        "F10",
+        "E10"
+      ],
+      [
+        "B15",
+        "B18"
+      ],
+      [
+        "D18",
+        "D23"
+      ],
+      [
+        "A21",
+        "A22"
+      ],
+      [
+        "J26",
+        "J27"
+      ],
+      [
+        "F32",
+        "E32"
+      ],
+      [
+        "F33",
+        "E33"
+      ],
+      [
+        "H35",
+        "H25"
+      ],
+      [
+        "H40",
+        "H44"
+      ],
+      [
+        "D26",
+        "D27"
+      ],
+      [
+        "B22",
+        "B28"
+      ],
+      [
+        "B32",
+        "B51"
+      ],
+      [
+        "D38",
+        "D41"
+      ],
+      [
+        "C41",
+        "C25"
+      ],
+      [
+        "D49",
+        "D47"
+      ],
+      [
+        "F47",
+        "E47"
+      ],
+      [
+        "F46",
+        "E46"
+      ],
+      [
+        "J47",
+        "J51"
+      ],
+      [
+        "I47",
+        "I53"
+      ],
+      [
+        "G49",
+        "G50"
+      ],
+      [
+        "F59",
+        "E59"
+      ],
+      [
+        "D59",
+        "D53"
+      ],
+      [
+        "F56",
+        "E56"
+      ],
+      [
+        "C56",
+        "C54"
+      ],
+      [
+        "F62",
+        "E62"
+      ],
+      [
+        "A62",
+        "B-62"
+      ],
+      [
+        "J62",
+        "T-62"
+      ]
+    ]
+  }
+}
