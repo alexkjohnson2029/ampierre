@@ -1450,6 +1450,7 @@ def place(
     from .flow import FlowPlacer  # local import: flow.py imports this module
     from .gates import pack_sections
 
+    netlist = _named_as_picked(netlist, custom or {})
     # Op-amps drawn one triangle at a time share dual and quad chips.
     netlist = pack_sections(netlist, custom)
 
@@ -1542,6 +1543,30 @@ def place(
         "tightly instead. Everything is still electrically correct."
     )
     return packed
+
+
+def _named_as_picked(netlist: Netlist, custom: dict) -> Netlist:
+    """Call each part what was picked for it, not what the schematic said.
+
+    A diode drawn as a 1N4148 and built with a 1N5819 is a 1N5819 on the
+    board, in the hover card and in the build steps; the schematic's name is
+    kept in the part's notes.
+    """
+    out, renamed = [], False
+    for comp in netlist.components:
+        pkg = pk.BY_ID.get(comp.package or "")
+        if pkg is None or comp.kind is ComponentKind.POTENTIOMETER or comp.ref in custom:
+            out.append(comp)
+            continue
+        name = pk.part_name(comp.value, pkg)
+        if name == comp.value:
+            out.append(comp)
+            continue
+        said = f"Schematic says {comp.value}; built with {name}." if comp.value else None
+        notes = " · ".join(n for n in (said, comp.notes) if n) or None
+        out.append(comp.model_copy(update={"value": name, "notes": notes}))
+        renamed = True
+    return netlist.model_copy(update={"components": out}) if renamed else netlist
 
 
 def _failed(layout: Layout) -> bool:

@@ -30,7 +30,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = ap.parse_args(argv)
 
-    netlist = Netlist.model_validate_json(args.netlist.read_text())
+    netlist = Netlist.model_validate_json(args.netlist.read_text(encoding="utf-8"))
     layout = place(netlist, style=args.style)
 
     if args.out:

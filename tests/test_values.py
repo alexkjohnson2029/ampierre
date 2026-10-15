@@ -74,7 +74,7 @@ def test_capacitor_body_follows_the_value():
 
 
 def _example(name: str) -> Netlist:
-    return Netlist.model_validate(json.loads((EXAMPLES / f"{name}.json").read_text()))
+    return Netlist.model_validate(json.loads((EXAMPLES / f"{name}.json").read_text(encoding="utf-8")))
 
 
 def test_identical_parts_are_one_question():

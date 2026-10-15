@@ -93,7 +93,7 @@ def test_supply_names_are_recognised(name, role):
 
 
 def _netlist(path: Path) -> Netlist:
-    return Netlist.model_validate(json.loads(path.read_text()))
+    return Netlist.model_validate(json.loads(path.read_text(encoding="utf-8")))
 
 
 @pytest.mark.parametrize("path", EXAMPLES, ids=lambda p: p.stem)

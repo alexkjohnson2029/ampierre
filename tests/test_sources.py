@@ -16,7 +16,7 @@ EXAMPLES = sorted((Path(__file__).resolve().parent.parent / "examples").glob("*.
 
 
 def _example(stem: str) -> Netlist:
-    return Netlist.model_validate(json.loads(next(p for p in EXAMPLES if p.stem == stem).read_text()))
+    return Netlist.model_validate(json.loads(next(p for p in EXAMPLES if p.stem == stem).read_text(encoding="utf-8")))
 
 
 def _follower(sources, nets=None) -> Netlist:

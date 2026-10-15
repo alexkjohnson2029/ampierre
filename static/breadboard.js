@@ -154,10 +154,15 @@ function leadMark(pin, px, py) {
 /* The schematic's own remark about a part first, then the package's. */
 const noteOf = (b) => [b.schematic_note, b.note].filter(Boolean).join(" ");
 
+/* Small-signal and Zener diodes come in clear orange glass with a black band;
+ * rectifiers and Schottkys in black epoxy with a grey one. Drawing them that
+ * way is how you tell which one you picked. */
+const isGlass = (comp) => /1n4148|zener/i.test(comp.package || "");
+
 function valueRows(comp) {
   const v = comp.body?.value_info || {};
   const rows = [];
-  if (v.pretty || v.raw) rows.push(["Value", v.pretty || v.raw]);
+  if (v.pretty || v.raw) rows.push([comp.kind === "diode" ? "Part" : "Value", v.pretty || v.raw]);
   if (v.bands) rows.push(["Bands", v.bands.text]);
   if (v.code && v.cap_style === "ceramic") rows.push(["Marking", v.code]);
   return rows;
@@ -452,11 +457,12 @@ function twoLead(comp) {
     const dw = Math.min(bw, DIODE_LEN);
     const bh = 13;
     const sx = markedRight ? mid + dw / 2 - 7 : mid - dw / 2 + 3;
-    body = `<rect class="diode-body" x="${mid - dw / 2}" y="${yy - bh / 2}" width="${dw}" height="${bh}" rx="2.5"/>
-      <rect class="diode-band" x="${sx}" y="${yy - bh / 2}" width="4" height="${bh}"/>`;
+    const glass = isGlass(comp);
+    body = `<rect class="diode-body${glass ? " glass" : ""}" x="${mid - dw / 2}" y="${yy - bh / 2}" width="${dw}" height="${bh}" rx="2.5"/>
+      <rect class="diode-band${glass ? " glass" : ""}" x="${sx}" y="${yy - bh / 2}" width="4" height="${bh}"/>`;
     if (dw >= 52) {
       const lx = mid + (markedRight ? -4 : 4);
-      body += `<text class="comp-label on-dark body-label" x="${lx}" y="${yy + 3.6}" text-anchor="middle">${esc(
+      body += `<text class="comp-label${glass ? "" : " on-dark"} body-label" x="${lx}" y="${yy + 3.6}" text-anchor="middle">${esc(
         comp.ref
       )}</text>`;
       labelled = true;
@@ -569,10 +575,11 @@ function standingComponent(comp) {
     const bh = Math.max(18, Math.min(span, DIODE_LEN));
     const y0 = mid - bh / 2;
     const by = markedTop ? y0 + 3 : y0 + bh - 7;
-    body = `<rect class="diode-body" x="${cx - 6.5}" y="${y0}" width="13" height="${bh}" rx="2.5"/>
-      <rect class="diode-band" x="${cx - 6.5}" y="${by}" width="13" height="4"/>`;
+    const glass = isGlass(comp);
+    body = `<rect class="diode-body${glass ? " glass" : ""}" x="${cx - 6.5}" y="${y0}" width="13" height="${bh}" rx="2.5"/>
+      <rect class="diode-band${glass ? " glass" : ""}" x="${cx - 6.5}" y="${by}" width="13" height="4"/>`;
     if (bh >= 52) {
-      body += rotated(markedTop ? y0 + 9 : y0, markedTop ? y0 + bh : y0 + bh - 9, " on-dark");
+      body += rotated(markedTop ? y0 + 9 : y0, markedTop ? y0 + bh : y0 + bh - 9, glass ? "" : " on-dark");
       labelled = true;
     }
   } else if (comp.kind === "led") {
@@ -852,6 +859,8 @@ export const BOARD_CSS = `
   .res-band { stroke: rgba(0,0,0,0.18); stroke-width: 0.4; }
   .diode-body { fill: #30343c; stroke: #16181c; stroke-width: 1; }
   .diode-band { fill: #e6e6e8; }
+  .diode-body.glass { fill: #e9a25a; fill-opacity: 0.85; stroke: #a8642a; }
+  .diode-band.glass { fill: #1d1d1f; }
   .cap-disc { fill: #d9a441; stroke: #a87a22; stroke-width: 1; }
   .cap-film { fill: #c9504b; stroke: #8f3733; stroke-width: 1; }
   .cap-code { font: 600 9px ui-monospace, Menlo, monospace; fill: #3a2f17; }

@@ -23,6 +23,7 @@ differ: check the datasheet before you power anything up.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from .models import ComponentKind
@@ -473,7 +474,7 @@ DIODE_SCHOTTKY = Package(
 
 DIODE_ZENER = Package(
     id="axial_zener",
-    label="Zener diode (axial)",
+    label="1N47xx — Zener diode (axial)",
     kinds=(ComponentKind.DIODE,),
     form="axial",
     pin_count=2,
@@ -556,6 +557,35 @@ DEFAULT_FOR_KIND: dict[ComponentKind, str] = {
 def options_for(kind: ComponentKind) -> list[Package]:
     """Packages offered in the picker for a given component kind."""
     return [p for p in ALL_PACKAGES if kind in p.kinds]
+
+
+def part_numbers(pkg: Package) -> list[str]:
+    """The part numbers a package's label names: "1N5819 — Schottky…" -> ["1N5819"],
+    "TL074 / LM324 / OP484 — quad…" -> ["TL074", "LM324", "OP484"]. Empty for a
+    generic package ("Axial diode (…)", "Generic DIP-8")."""
+    head = re.split(r"\s+[—(]", pkg.label, maxsplit=1)[0]
+    names = [n.strip() for n in head.split("/")]
+    return [n for n in names if n and re.search(r"\d", n) and " " not in n]
+
+
+def part_name(value: str | None, pkg: Package) -> str | None:
+    """What to call a part once its package is picked.
+
+    The schematic's value says what was simulated; the package is what's in
+    your hand. They agree when the package lists the value ("OP484" on the
+    TL074 / LM324 / OP484 quad) or names no part at all (a generic DIP). When
+    they disagree — a 1N4148 on the schematic, a 1N5819 picked — the board
+    should say 1N5819, or the pick looks like it did nothing.
+    """
+    names = part_numbers(pkg)
+    if not names:
+        return value
+    if value:
+        flat = lambda s: re.sub(r"[\s\-]", "", s).upper()  # noqa: E731
+        v = flat(value)
+        if any(flat(n) in v or v in flat(n) for n in names) or v in flat(pkg.label):
+            return value
+    return names[0]
 
 
 def get(package_id: str | None, kind: ComponentKind) -> Package:

@@ -19,13 +19,13 @@ STYLES = ("flow", "flow-compact")
 
 def _netlist(stem: str) -> Netlist:
     path = next(p for p in EXAMPLES if p.stem == stem)
-    return Netlist.model_validate(json.loads(path.read_text()))
+    return Netlist.model_validate(json.loads(path.read_text(encoding="utf-8")))
 
 
 @pytest.mark.parametrize("style", STYLES)
 @pytest.mark.parametrize("path", EXAMPLES, ids=lambda p: p.stem)
 def test_every_example_lays_out_schematic_shaped(path, style):
-    layout = place(Netlist.model_validate(json.loads(path.read_text())), style=style)
+    layout = place(Netlist.model_validate(json.loads(path.read_text(encoding="utf-8"))), style=style)
     assert layout.warnings == [], layout.warnings
     assert not any("packed tightly" in n for n in layout.notes), "fell back to packing"
     assert bb.verify(layout) == []
@@ -212,14 +212,14 @@ def test_simple_circuits_have_only_straight_wires_that_never_cross(stem, style):
 @pytest.mark.parametrize("path", EXAMPLES, ids=lambda p: p.stem)
 @pytest.mark.parametrize("style", STYLES)
 def test_no_wire_ever_runs_over_a_part(path, style):
-    layout = place(Netlist.model_validate(json.loads(path.read_text())), style=style)
+    layout = place(Netlist.model_validate(json.loads(path.read_text(encoding="utf-8"))), style=style)
     assert quality.measure(layout).over_part == 0
 
 
 @pytest.mark.parametrize("path", EXAMPLES, ids=lambda p: p.stem)
 @pytest.mark.parametrize("style", STYLES)
 def test_busy_circuits_still_need_at_most_one_untidy_wire(path, style):
-    q = quality.measure(place(Netlist.model_validate(json.loads(path.read_text())), style=style))
+    q = quality.measure(place(Netlist.model_validate(json.loads(path.read_text(encoding="utf-8"))), style=style))
     assert q.diagonal + q.crossings <= 1, q
 
 

@@ -21,7 +21,7 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" / "three_band_equa
 
 
 def _eq(**changes) -> Netlist:
-    data = json.loads(EXAMPLE.read_text())
+    data = json.loads(EXAMPLE.read_text(encoding="utf-8"))
     data.update(changes)
     return Netlist.model_validate(data)
 
@@ -149,7 +149,7 @@ def test_hole_names():
 
 
 def test_a_plan_that_does_not_fit_is_refused_not_half_built():
-    data = json.loads(EXAMPLE.read_text())
+    data = json.loads(EXAMPLE.read_text(encoding="utf-8"))
     data["layout"]["parts"]["R6"] = {"1": "H22", "2": "G18"}  # leads in two rows
     with pytest.raises(PlanError):
         HandPlacer(Netlist.model_validate(data)).run()
@@ -159,7 +159,7 @@ def test_a_plan_that_does_not_fit_is_refused_not_half_built():
 
 
 def test_a_broken_plan_falls_back_to_the_automatic_layout():
-    data = json.loads(EXAMPLE.read_text())
+    data = json.loads(EXAMPLE.read_text(encoding="utf-8"))
     data["layout"]["parts"]["R6"] = {"1": "G22", "2": "G17"}
     layout = place(Netlist.model_validate(data))
     assert not any("Laid out by hand" in n for n in layout.notes)
@@ -168,7 +168,7 @@ def test_a_broken_plan_falls_back_to_the_automatic_layout():
 
 
 def test_picking_a_different_chip_drops_the_plan_rather_than_miswiring_it():
-    data = json.loads(EXAMPLE.read_text())
+    data = json.loads(EXAMPLE.read_text(encoding="utf-8"))
     for comp in data["components"]:
         if comp["ref"] == "IC1":
             comp["package"] = "dip8_dual_opamp"  # sections C and D don't exist on it
@@ -186,7 +186,7 @@ def test_without_the_plan_the_automatic_layout_still_proves_correct():
 
 
 def _eight_single_op_amps(package="dip14_quad_opamp", vneg="V-") -> Netlist:
-    data = json.loads(EXAMPLE.read_text())
+    data = json.loads(EXAMPLE.read_text(encoding="utf-8"))
     data.pop("layout")
     comps = [c for c in data["components"] if c["kind"] != "opamp"]
     wiring = {

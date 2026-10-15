@@ -6,7 +6,7 @@ from fastapi import HTTPException
 
 from app.main import netlist_route
 from app.models import Netlist
-from app.placer import place
+from app.placer import _failed, place
 
 # What static/schematic.js makes of its sample drawing (sampleDoc()).
 DRAWN = {
@@ -50,6 +50,25 @@ def test_drawn_netlist_places_cleanly():
     layout = place(nl)
     assert not [w for w in layout.warnings if "not placed" in w or "short" in w]
     assert {c.ref for c in layout.components} == {"U1", "R1", "R2"}
+
+
+def test_picking_a_different_diode_renames_it_on_the_board():
+    """The equalizer's D2 is a 1N4148 on the schematic; picking a Schottky has
+    to show up as one, or the pick looks like it did nothing."""
+    import json
+    from pathlib import Path
+
+    from app.main import PlaceRequest, place_route
+
+    data = json.loads((Path(__file__).parent.parent / "examples" / "three_band_equalizer.json").read_text(encoding="utf-8"))
+    for choice, name in [("axial_schottky", "1N5819"), ("axial_zener", "1N47xx"), ("axial_1n4148", "1N4148"), ("axial_diode", "1N4148")]:
+        layout = place_route(PlaceRequest(netlist=Netlist.model_validate(data), packages={"D2": choice}))
+        d2 = next(c for c in layout.components if c.ref == "D2")
+        assert d2.package == choice
+        assert d2.value == name
+        assert not _failed(layout)
+        steps = " ".join(s.text for s in layout.build_order if s.ref == "D2")
+        assert name in steps
 
 
 def test_empty_drawing_is_refused():

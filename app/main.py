@@ -211,7 +211,7 @@ def packages_route():
 def examples_route():
     out = []
     for f in sorted(EXAMPLES.glob("*.json")):
-        data = json.loads(f.read_text())
+        data = json.loads(f.read_text(encoding="utf-8"))
         entry = {"id": f.stem, "title": data.get("title", f.stem)}
         if data.get("about"):  # a featured build: who made it and why it's here
             entry["about"] = data["about"]
@@ -225,7 +225,7 @@ def example_route(name: str):
     f = EXAMPLES / f"{Path(name).name}.json"
     if not f.exists():
         raise HTTPException(404, "No such example.")
-    netlist = Netlist.model_validate_json(f.read_text())
+    netlist = Netlist.model_validate_json(f.read_text(encoding="utf-8"))
     return ParseResponse(netlist=netlist, questions=questions_for(netlist))
 
 
