@@ -693,7 +693,7 @@ export function mountEditor(root, { onUse }) {
       ${p.type === "ground" ? "" : `<label class="sch-field">${valueLabel}<input type="text" id="sch-p-value" value="${esc(p.value)}"></label>`}
       ${p.type === "dc_source" ? `<label class="sch-check"><input type="checkbox" id="sch-p-power" ${p.power !== false ? "checked" : ""}>
         Powers the circuit (goes on a rail)</label>` : ""}
-      ${p.type === "signal_source" ? `<p class="hint">e.g. SINE(0 1 1k) â€” 1 V peak at 1 kHz.</p>` : ""}
+      ${p.type === "signal_source" ? `<p class="hint">e.g. SINE(0 1 1k) — 1 V peak at 1 kHz.</p>` : ""}
       <div class="sch-pbtns">
         <button class="ghost" id="sch-p-rot" title="Ctrl+R">Rotate</button>
         <button class="ghost" id="sch-p-mir" title="Ctrl+E">Mirror</button>
