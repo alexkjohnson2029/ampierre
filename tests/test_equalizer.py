@@ -14,7 +14,6 @@ from app import quality
 from app import values as val
 from app.gates import pack_sections
 from app.handlaid import HandPlacer, PlanError, parse_hole
-from app.llm import NETLIST_TOOL
 from app.models import Hole, Netlist, NetRole
 from app.placer import _failed, is_unused, place
 
@@ -239,17 +238,3 @@ def test_eight_op_amps_still_make_a_correct_board():
     assert len(chips) == 2
     assert not _failed(layout)
     assert bb.verify(layout) == []
-
-
-# --- the LLM is told about all of this ---------------------------------------
-
-
-def test_the_llm_can_report_sources_and_pots():
-    from app.llm import SYSTEM
-
-    props = NETLIST_TOOL["input_schema"]["properties"]
-    assert "sources" in props
-    assert set(props["sources"]["items"]["properties"]["kind"]["enum"]) == {"dc", "signal"}
-    assert "potentiometer" in props["components"]["items"]["properties"]["kind"]["enum"]
-    assert "1 Ω placeholder" in SYSTEM
-    assert "never be named or treated as the positive supply" in SYSTEM

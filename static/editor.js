@@ -4,7 +4,7 @@
  * ground, W (or F3) for a wire, N (or F4) for a net label, Ctrl+R rotate,
  * Ctrl+E mirror, Delete (or F5) to delete, Esc to stop. The drawing turns
  * into a Netlist (schematic.js) and goes to the same part picker as a
- * screenshot would, with no model in between.
+ * pasted netlist does.
  */
 import {
   G, SYMBOLS, PALETTE, pinsOf, bboxOf, transform, connectivity, isConnected,

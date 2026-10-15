@@ -1,4 +1,4 @@
-/* App wiring: upload -> parse -> pick packages -> place -> render -> step through. */
+/* App wiring: draw or paste -> pick packages -> place -> render -> step through. */
 import { renderBoard } from "./breadboard.js";
 import { pinoutDiagram } from "./pinout.js";
 import { mountEditor } from "./editor.js";
@@ -11,7 +11,6 @@ const state = {
   custom: {}, // ref -> {name, form, pin_count, pin_map}
   filters: {}, // ref -> search text
   layout: null,
-  file: null,
   step: null, // null = whole board
   upcoming: "hidden", // or "ghost" — what to do with parts not placed yet
   style: "flow", // or "flow-compact"
@@ -59,52 +58,46 @@ for (const name of ["input", "board"]) {
 }
 
 // ---------------------------------------------------------------------------
-// Step 1 — input
+// Step 1 — paste a netlist
 // ---------------------------------------------------------------------------
 
-const drop = $("drop");
-$("browse").onclick = () => $("file").click();
-$("file").onchange = (e) => takeFile(e.target.files[0]);
+/* What's in the box survives a reload, like the drawing does. */
+try {
+  $("spice").value = localStorage.getItem("ampierre.pasted") || "";
+} catch {}
+$("spice").oninput = () => {
+  try {
+    localStorage.setItem("ampierre.pasted", $("spice").value);
+  } catch {}
+};
 
-["dragenter", "dragover"].forEach((ev) =>
-  drop.addEventListener(ev, (e) => {
-    e.preventDefault();
-    drop.classList.add("over");
-  })
-);
-["dragleave", "drop"].forEach((ev) =>
-  drop.addEventListener(ev, (e) => {
-    e.preventDefault();
-    drop.classList.remove("over");
-  })
-);
-drop.addEventListener("drop", (e) => takeFile(e.dataTransfer.files[0]));
-
-function takeFile(file) {
-  if (!file || !file.type.startsWith("image/")) return;
-  state.file = file;
-  const img = $("preview");
-  img.src = URL.createObjectURL(file);
-  img.hidden = false;
-}
+$("spice-file-btn").onclick = () => $("spice-file").click();
+$("spice-file").onchange = async (e) => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  $("spice").value = await f.text();
+  $("spice").oninput();
+};
 
 $("parse").onclick = async () => {
   const err = $("parse-error");
   err.hidden = true;
-  const spice = $("spice").value.trim();
-  if (!state.file && !spice) {
-    err.textContent = "Pick a schematic image, paste a SPICE netlist, or load an example.";
+  const text = $("spice").value.trim();
+  if (!text) {
+    err.textContent = "Paste a netlist first, or open an example.";
     err.hidden = false;
     return;
   }
-  const body = new FormData();
-  if (state.file) body.append("image", state.file);
-  if (spice) body.append("spice", spice);
-  if ($("hint").value.trim()) body.append("hint", $("hint").value.trim());
-
-  busy(true, state.file ? "reading the schematic…" : "reading the netlist…");
+  busy(true, "reading the netlist…");
   try {
-    showParse(await api("/api/parse", { method: "POST", body }));
+    showParse(
+      await api("/api/parse", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text }),
+      })
+    );
   } catch (e) {
     err.textContent = e.message;
     err.hidden = false;
@@ -186,8 +179,8 @@ const editor = mountEditor($("editor"), {
 
 function setInputMode(mode) {
   $("step-draw").hidden = mode !== "draw";
-  $("step-input").hidden = mode !== "upload";
-  for (const id of ["mode-upload", "mode-draw"]) {
+  $("step-input").hidden = mode !== "paste";
+  for (const id of ["mode-draw", "mode-paste"]) {
     $(id).classList.toggle("active", $(id).dataset.mode === mode);
   }
   try {
@@ -195,11 +188,11 @@ function setInputMode(mode) {
   } catch {}
   if (mode === "draw") editor.shown();
 }
-for (const id of ["mode-upload", "mode-draw"]) {
+for (const id of ["mode-draw", "mode-paste"]) {
   $(id).onclick = () => setInputMode($(id).dataset.mode);
 }
 try {
-  if (localStorage.getItem("ampierre.inputMode") === "draw") setInputMode("draw");
+  if (localStorage.getItem("ampierre.inputMode") === "paste") setInputMode("paste");
 } catch {}
 
 // ---------------------------------------------------------------------------

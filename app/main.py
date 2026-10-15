@@ -1,54 +1,32 @@
 """FastAPI backend.
 
-    POST /api/parse     schematic image (or SPICE text) -> netlist + questions
-    POST /api/netlist   netlist drawn in the editor     -> the same, no model
+    POST /api/parse     pasted SPICE (or JSON) netlist  -> netlist + questions
+    POST /api/netlist   netlist drawn in the editor     -> netlist + questions
     POST /api/place     netlist with packages chosen    -> breadboard layout
     GET  /api/packages  the package catalogue for the picker
-    GET  /api/examples  built-in netlists, so the app is usable with no API key
+    GET  /api/examples  built-in netlists
 """
 
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import packages as pk
-from .llm import LLMError, extract_netlist, netlist_from_spice
 from .models import AMBIGUOUS_KINDS, ComponentKind, Layout, Netlist
 from .placer import place
+from .spice import SpiceError
+from .spice import parse as parse_spice
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = ROOT / "static"
 EXAMPLES = ROOT / "examples"
 
-
-def load_dotenv() -> None:
-    env = ROOT / ".env"
-    if not env.exists():
-        return
-    import os
-
-    for line in env.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
-
-
-load_dotenv()
-
-#: Set BREADBOARD_FAKE_LLM=1 to click through the whole app with no API key.
-#: /api/parse then ignores what you uploaded and hands back a stored netlist,
-#: clearly labelled as such, so the upload → questions → place → draw path can
-#: be exercised end to end for free.
-FAKE_LLM = os.environ.get("BREADBOARD_FAKE_LLM") == "1"
 
 app = FastAPI(title="AMPierre — schematic to breadboard")
 
@@ -153,46 +131,23 @@ class ParseResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+class PasteRequest(BaseModel):
+    text: str
+
+
 @app.post("/api/parse", response_model=ParseResponse)
-async def parse(
-    image: UploadFile | None = File(default=None),
-    spice: str | None = Form(default=None),
-    hint: str | None = Form(default=None),
-):
-    if FAKE_LLM:
-        netlist = Netlist.model_validate_json(
-            (EXAMPLES / "three_band_equalizer.json").read_text()
-        )
-        netlist.warnings.insert(
-            0,
-            "FAKE MODEL MODE: this netlist is a stored example, not a reading of "
-            "the file you uploaded. Unset BREADBOARD_FAKE_LLM to use the real model.",
-        )
-        return ParseResponse(netlist=netlist, questions=questions_for(netlist))
-
+def parse(req: PasteRequest):
+    """A pasted netlist: SPICE as LTspice or PSpice writes it, or JSON."""
     try:
-        if image is not None:
-            data = await image.read()
-            if not data:
-                raise HTTPException(400, "That file was empty.")
-            media = image.content_type or "image/png"
-            if media not in {"image/png", "image/jpeg", "image/gif", "image/webp"}:
-                raise HTTPException(400, f"Unsupported image type: {media}")
-            netlist = extract_netlist(data, media, hint)
-        elif spice:
-            netlist = netlist_from_spice(spice)
-        else:
-            raise HTTPException(400, "Send either an image or SPICE text.")
-    except LLMError as e:
+        netlist = parse_spice(req.text)
+    except SpiceError as e:
         raise HTTPException(400, str(e)) from e
-
     return ParseResponse(netlist=netlist, questions=questions_for(netlist))
 
 
 @app.post("/api/netlist", response_model=ParseResponse)
 def netlist_route(netlist: Netlist):
-    """A netlist that needs no reading — drawn in the editor, or saved earlier.
-    Straight to the part questions, no model involved."""
+    """A netlist drawn in the editor: straight to the part questions."""
     if not netlist.components:
         raise HTTPException(400, "The netlist has no components.")
     return ParseResponse(netlist=netlist, questions=questions_for(netlist))

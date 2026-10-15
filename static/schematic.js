@@ -467,13 +467,12 @@ export function toSpice(doc) {
       case "regulator":
         lines.push(`X${c.ref} ${n(p.IN)} ${n(p.GND)} ${n(p.OUT)} ${v || "regulator"}`);
         break;
-      case "potentiometer": {
-        const ends = [p["1"], p["3"]].filter(Boolean);
-        lines.push(`* ${c.ref}: ${v} potentiometer, wiper on ${n(p.W)}`);
-        if (ends.length === 2) lines.push(`R${c.ref}_ends ${n(ends[0])} ${n(ends[1])} ${v}`);
-        else if (ends.length === 1) lines.push(`R${c.ref} ${n(ends[0])} ${n(p.W)} ${v}`);
+      case "potentiometer":
+        // end, wiper, end — an unconnected end gets a node of its own
+        lines.push(
+          `X${c.ref} ${n(p["1"] || `${c.ref}_NC1`)} ${n(p.W)} ${n(p["3"] || `${c.ref}_NC3`)} potentiometer R=${v}`
+        );
         break;
-      }
     }
   }
   for (const s of netlist.sources) {

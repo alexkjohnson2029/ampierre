@@ -2,49 +2,43 @@
 
 **Schematic in, breadboard out.**
 
-Hand it a screenshot of a schematic (LTspice, PSpice, KiCad, a photo of a whiteboard)
-and get back a top-down breadboard layout: where every part goes, which way round it
-faces, and every jumper you have to cut.
+Draw a schematic on the site the way you would in LTspice, or paste the SPICE netlist
+LTspice or PSpice gives you, and get back a top-down breadboard layout: where every part
+goes, which way round it faces, and every jumper you have to cut.
 
-The page has two tabs, pinned to the bottom of the window: **Input** (load a schematic,
-pick the real parts) and **Board** (the layout, the build timeline, the parts list).
-**About** (top right) explains what the project is for and who made it; the
+The page has two tabs, pinned to the bottom of the window: **Input** (draw or paste the
+circuit, pick the real parts) and **Board** (the layout, the build timeline, the parts
+list). **About** (top right) explains what the project is for and who made it; the
 developer API reference is linked from the bottom of that page.
 
-The model does one job — read the picture and say what connects to what. Placement,
-wiring and the drawing are ordinary code, so the same netlist always gives the same
-board and a wrong layout is a bug you can reproduce instead of a bad roll.
+Everything is ordinary code — no AI model, no API key, nothing sent anywhere. The same
+netlist always gives the same board, and a wrong layout is a bug you can reproduce.
 
 ```
-schematic.png ──► llm.py ──► Netlist ──► placer.py ──► Layout ──► breadboard.js ──► SVG
-                 (model)    (JSON)      (arithmetic)   (JSON)      (renderer)
-                                            │
-                                            └─► breadboard.verify() — proves the board
-                                                is the circuit before you plug it in
+drawing (editor.js) ─┐
+                     ├─► Netlist ──► placer.py ──► Layout ──► breadboard.js ──► SVG
+SPICE text (spice.py)┘    (JSON)    (arithmetic)   (JSON)      (renderer)
+                                        │
+                                        └─► breadboard.verify() — proves the board
+                                            is the circuit before you plug it in
 ```
 
 ## Setup
 
-You need Python 3.11+ and an Anthropic API key.
+You need Python 3.11+.
 
 ```bash
 cd schematic2breadboard
 python3 -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-cp .env.example .env          # then put your key in .env
 python3 run.py                # http://127.0.0.1:8000
 ```
 
-Get the key at console.anthropic.com → API keys. It lives in `.env`, which `.gitignore`
-already excludes — don't paste it into the code.
-
-**No key yet?** Everything except reading the image works without one. Open the app and
-click one of the example circuits, or stay in the terminal:
+From the terminal:
 
 ```bash
-python3 -m app.cli examples/three_band_equalizer.json      # build steps, no network
-python3 -m pytest -q                                       # 173 tests, no network
+python3 -m app.cli examples/three_band_equalizer.json      # build steps
+python3 -m pytest -q                                       # 185 tests
 ```
 
 ### Exporting a board without the browser
@@ -58,11 +52,10 @@ Needs Node 18+. Handy for dropping a board into a lab report.
 
 ## Using it
 
-### Drawing the schematic instead
+### Drawing the schematic
 
-Choose **Draw the schematic** at the top of the Input tab to draw the circuit on the site,
-LTspice-style, instead of uploading a picture. A drawing is already a netlist, so it goes
-straight to step 2 with no model call and no API key.
+**Draw the schematic** (the default on the Input tab) is an LTspice-style editor. A drawing
+is already a netlist, so it goes straight to step 2.
 
 - Parts: resistor, capacitor, electrolytic, inductor, potentiometer, diode, LED, NPN, PNP,
   N/P-MOSFET, op-amp, regulator, DC supply, signal generator, ground and net labels.
@@ -81,13 +74,25 @@ straight to step 2 with no model call and no API key.
 The editor lives in `static/editor.js`; the symbols, connectivity and the netlist and SPICE
 conversion are in `static/schematic.js`. `POST /api/netlist` takes the result.
 
-### From a screenshot
+### Pasting a netlist
 
-1. **Load a schematic.** Screenshot the schematic window, not the whole screen — the
-   model reads component labels, and LTspice draws them small. If something is unclear
-   (which op-amp, what the supply is), say so in the hint box; it goes to the model
-   verbatim.
-2. **Pick the real parts.** Choices on the left, the pinout of whichever one is selected
+**Paste a netlist** takes SPICE text: in LTspice, **View → SPICE Netlist**, copy it all and
+paste. PSpice `.cir`/`.net` files and hand-written netlists work too, as does a JSON netlist
+saved from this app. `app/spice.py` reads it with no guessing where the netlist is explicit:
+
+- `R`, `C`, `L`, `D`, `Q`, `M`, `V` lines become parts and bench instruments; node `0` is GND.
+- `X` lines are subcircuits. Five nodes is an op-amp, in LTspice's order (In+ In− V+ V− Out);
+  78xx/LM317-style names with three nodes are regulators; anything else becomes a chip whose
+  pinout you pick on the next screen.
+- NPN or PNP, N- or P-channel: from the netlist's `.model` lines, then the part number
+  (2N3906 is PNP, BS250 is P-channel…). Anything still a guess is listed under "Check these".
+- SPICE suffixes are read the SPICE way: `1Meg` is a megohm, `1M` is a milliohm.
+- Simulation-only lines (`.tran`, `.ac`, `I` sources, controlled sources, `.subckt` bodies)
+  are skipped, and the warnings say which.
+
+### Then
+
+1. **Pick the real parts.** Choices on the left, the pinout of whichever one is selected
    on the right, so you can check the two against each other without scrolling. A triangle on a schematic has no pinout. An op-amp could be
    an LM741 (output on pin 6) or a TL072 (output on pin 1), and a TO-92 transistor is
    E–B–C or C–B–E depending on which one you grabbed from the drawer. The app asks about
@@ -98,11 +103,11 @@ conversion are in `static/schematic.js`. `POST /api/netlist` takes the result.
    with the pins your circuit uses picked out and the net names on them. If your part
    isn't in the list, choose **My own part** and type the pinout: name, package, pin count,
    and which physical pin each schematic pin goes to.
-3. **Build the board.** Hover anything: rails show what they supply, ICs and transistors
+2. **Build the board.** Hover anything: rails show what they supply, ICs and transistors
    show their pinout and orientation, passives show their value and colour code. Hovering
    also lights up everything else on the same net, which is the fastest way to check a
    built board against the schematic.
-4. **Step through it.** The timeline under the board adds one part or one jumper at a
+3. **Step through it.** The timeline under the board adds one part or one jumper at a
    time. Drag the slider, press Play, click a chip in the strip, or use the arrow keys.
    Parts already placed are solid and the current one is ringed; anything not placed yet
    is simply absent, so the board looks like your board does. Tick **Ghost upcoming
@@ -144,9 +149,9 @@ library, pins `1`, `W` (wiper), `3`. A pot used as a variable resistor — one e
 unconnected, as on the equalizer — still has three legs in the board; the spare one gets
 a strip to itself so nothing else can land on it.
 
-SPICE has no knob, so pots are usually drawn as two resistors with the wiper at the
-junction, often a 1 Ω placeholder and a floating end. The model is told to read that
-pattern as one potentiometer.
+SPICE has no knob, so LTspice users often draw a pot as two resistors with the wiper at
+the junction, often a 1 Ω placeholder and a floating end. Draw it with the editor's
+potentiometer instead, so it comes through as one part.
 
 ### Op-amps drawn one at a time
 
@@ -298,85 +303,28 @@ different chip, say — is dropped and the automatic layout is used instead.
 | `app/handlaid.py` | Places a board from a hand-made plan, checking every hole |
 | `app/quality.py` | Scores a layout's wiring — diagonals, crossings, wires over parts — to pick the cleanest |
 | `app/placer.py` | Packed placement, routing, build order — and the fallback when flow can't fit |
-| `app/llm.py` | The one model call: image → netlist, via a tool schema |
+| `app/spice.py` | Reads a pasted SPICE (or JSON) netlist into a `Netlist` |
 | `app/models.py` | Pydantic types shared by all of the above |
 | `app/main.py` | FastAPI routes |
 | `app/cli.py` | Terminal entry point |
 | `static/breadboard.js` | Layout → SVG, whole or partway through the build. Runs in browser and node |
 | `static/pinout.js` | Datasheet-style pinout drawings, generated from package data |
 | `static/about.html` | About page: purpose, how to learn with it, credits |
-| `static/app.js` | Upload, package picker, custom pinouts, timeline, hover, net highlighting |
+| `static/app.js` | Draw/paste switch, package picker, custom pinouts, timeline, hover, net highlighting |
 | `static/editor.js` | The LTspice-style drawing editor |
 | `static/schematic.js` | Editor symbols, connectivity, drawing → netlist and SPICE |
-| `examples/*.json` | Netlists to work against with no API key |
-| `tests/` | pytest suite over the model, the pinouts and the verifier |
+| `examples/*.json` | Example netlists, one click away on the Input tab |
+| `tests/` | pytest suite over the SPICE reader, the pinouts, placement and the verifier |
 
-## Testing the model
+## Putting it online
 
-The 173 tests run with no API key and no network:
-
-```bash
-python3 -m pytest -q
-```
-
-`tests/test_llm.py` covers the model call itself by swapping in a stub client: that the
-image and hint are sent correctly, that a tool-use reply becomes a `Netlist`, that a
-chatty reply or a malformed netlist raises instead of being half-placed, and that the
-tool schema lists every component kind the app knows about. What it cannot tell you is
-whether the model can *read your schematics* — only a real call answers that.
-
-**Without a key**, click through the whole flow with a stored netlist standing in for the
-model:
-
-```powershell
-$env:BREADBOARD_FAKE_LLM="1"; .venv\Scripts\python.exe run.py
-```
-
-Upload anything, and `/api/parse` returns the equalizer netlist with a loud warning
-saying it did not come from your file. Everything after that point — the part questions,
-placement, the board, the timeline — is the real thing.
-
-**With a key**, the cheapest real check is one call from the terminal:
-
-```bash
-python3 tools/try_llm.py my_schematic.png
-```
-
-It prints the components and nets it read, anything it was unsure about, and whether the
-result places cleanly. A single schematic costs a fraction of a cent, so testing on a
-handful of your own LTspice exports is the right first spend.
-
-## Putting it on GitHub
-
-GitHub stores the code. It does **not** run it — this is a Python server with an API key,
-so GitHub Pages (static files only) can't host it.
-
-Publishing the code:
-
-```bash
-git init
-git add .
-git commit -m "AMPierre: schematic to breadboard"
-git branch -M main
-git remote add origin https://github.com/<you>/ampierre.git
-git push -u origin main
-```
-
-Create the empty repo on github.com first (no README, so it doesn't conflict).
-`.gitignore` already excludes `.env` and `.venv` — check `git status` before the first
-commit and make sure `.env` isn't in the list. **A key pushed to a public repo is
-compromised within minutes**; if it happens, revoke it in the console rather than
-deleting the commit.
+GitHub stores the code. It does **not** run it — this is a Python server, so GitHub Pages
+(static files only) can't host it.
 
 Running it somewhere other than your laptop needs a host that executes Python — Render,
-Railway, Fly.io and Hugging Face Spaces all have free or near-free tiers. The shape is
-the same everywhere: point the host at the repo, set the start command to
-`uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and add `ANTHROPIC_API_KEY` as a
-secret in the host's settings — never in the repo.
-
-One thing worth knowing before you make it public: every schematic a stranger uploads
-spends *your* credits. Keep it private, put a password in front of it, or add a rate
-limit before sharing the link widely.
+Railway, Fly.io and Hugging Face Spaces all have free or near-free tiers. The shape is the
+same everywhere: point the host at the repo and set the start command to
+`uvicorn app.main:app --host 0.0.0.0 --port $PORT`. There are no secrets to configure.
 
 ## Known limits
 
@@ -393,13 +341,13 @@ limit before sharing the link widely.
   shown before anything is placed precisely so you can check it against the datasheet.
 - Jumper routing is a nearest-neighbour chain, not a shortest-total-length solve. It's
   correct, not optimal.
-- The model reads what it can see. A smudged value or a wire that passes behind a symbol
-  comes back as a warning, not a silent guess — read the warnings before you build.
+- A SPICE netlist doesn't always say what a subcircuit is. Op-amps, regulators and pots
+  are recognised by pin count and name; anything else comes through as a chip you give a
+  pinout to, and every guess is listed under "Check these".
 
 ## Next, in rough order
 
-1. ~~The built-in schematic editor~~ — done, see [Drawing the schematic instead](#drawing-the-schematic-instead).
-   Next for it: import an LTspice `.asc` file into the editor.
+1. Import an LTspice `.asc` file into the editor, so a schematic opens as a drawing.
 2. Smarter placement for big circuits: choose which op-amp goes in which section, and
    which way round each chip faces, by searching for the shortest wiring.
 3. Output markers (speaker, scope probe) next to the input clips.

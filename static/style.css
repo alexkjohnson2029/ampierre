@@ -75,15 +75,6 @@ h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: 
 .empty { color: var(--muted); font-size: 14px; padding: 40px 0; text-align: center; }
 
 /* input ------------------------------------------------------------------ */
-.drop {
-  border: 1.5px dashed var(--line-strong);
-  padding: 26px; text-align: center; background: #fbfaf7;
-  transition: background 0.15s, border-color 0.15s;
-}
-.drop.over { border-color: var(--accent); background: #fcf2ec; }
-.drop p { margin: 2px 0; }
-#preview { max-width: 100%; max-height: 260px; margin-top: 14px; border: 1px solid var(--line); }
-
 .field { display: block; margin: 14px 0 6px; }
 .field span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
 input[type="text"], input[type="number"], textarea, select {
@@ -386,7 +377,11 @@ a.primary-link:hover { background: #9d4725; }
 .featured-board:hover { border-color: var(--accent); }
 
 /* schematic editor --------------------------------------------------------- */
-.input-mode { margin: 0 0 14px; background: #fff; }
+.input-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 14px; }
+.input-mode { background: #fff; }
+.examples-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#examples { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+#spice { min-height: 220px; }
 .input-mode .seg-btn { font-size: 14px; padding: 9px 16px; }
 
 .sch-head { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin: 6px 0 10px; }

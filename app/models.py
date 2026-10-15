@@ -2,10 +2,9 @@
 
 Three stages, three shapes:
 
-    Schematic image  --(LLM)-->  Netlist  --(placer)-->  Layout  --(JS)--> SVG
+    drawing / SPICE text  ---->  Netlist  --(placer)-->  Layout  --(JS)--> SVG
 
-Only the first arrow is probabilistic. Netlist and Layout are plain data, so
-everything after the LLM is testable without an API key.
+Netlist and Layout are plain data, so every stage is testable on its own.
 """
 
 from __future__ import annotations
@@ -143,7 +142,7 @@ class LayoutHints(BaseModel):
 
 
 class Netlist(BaseModel):
-    """What the LLM produces and the placer consumes."""
+    """What the editor or the SPICE reader produces and the placer consumes."""
 
     title: str = "Untitled circuit"
     components: list[Component] = []
@@ -154,7 +153,7 @@ class Netlist(BaseModel):
     )
     warnings: list[str] = Field(
         default_factory=list,
-        description="Things the LLM was unsure about in the schematic image.",
+        description="Things worth checking: guesses the SPICE reader made, loose pins.",
     )
     layout: LayoutHints | None = Field(
         default=None, description="A hand-made arrangement (bundled examples only)."
@@ -265,8 +264,8 @@ class Layout(BaseModel):
     )
     notes: list[str] = Field(
         default_factory=list,
-        description="Caveats carried over from the netlist itself — what the model "
-        "could not read, or what the circuit's author flagged.",
+        description="Caveats carried over from the netlist itself — guesses made "
+        "reading it, or what the circuit's author flagged.",
     )
     build_order: list[BuildStep] = Field(
         default_factory=list, description="Step-by-step assembly instructions."
