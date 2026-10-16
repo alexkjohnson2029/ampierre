@@ -2,7 +2,6 @@
   "title": "Three-band audio equalizer (2× OP484, ±4.5 V)",
   "about": {
     "badge": "AJ's build",
-    "eyebrow": "From the creator's projects",
     "headline": "AJ's three-band audio equalizer",
     "blurb": "Designed and simulated in LTspice by AMPierre's creator, then built on a breadboard. An input amp feeds three filters (bass, mid and treble), each with its own knob. The bands are buffered, mixed back together and amplified, and an LED lights when the output gets close to clipping. This is that circuit, laid out the way you'd build it.",
     "facts": [

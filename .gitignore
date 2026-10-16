@@ -5,3 +5,4 @@ __pycache__/
 *.svg
 !static/*.svg
 _site/
+.impeccable/review/
