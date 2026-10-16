@@ -59,16 +59,18 @@ export function mountEditor(root, { onUse }) {
         <input type="file" id="sch-file" accept=".json,application/json" hidden />
       </div>
     </div>
+    <p class="error" id="sch-error" role="alert" hidden></p>
     <div class="sch-body">
       <div class="sch-tools" id="sch-tools" role="toolbar" aria-label="Parts"></div>
       <div class="sch-canvas-wrap">
-        <svg class="sch-canvas" id="sch-svg" xmlns="http://www.w3.org/2000/svg" tabindex="0"></svg>
-        <div class="sch-status" id="sch-status"></div>
+        <svg class="sch-canvas" id="sch-svg" xmlns="http://www.w3.org/2000/svg" tabindex="0"
+          role="application" aria-label="Schematic canvas" aria-describedby="sch-status"></svg>
+        <div class="sch-status" id="sch-status" aria-live="polite"></div>
       </div>
       <aside class="sch-props" id="sch-props"></aside>
     </div>
     <div class="sch-foot">
-      <ul class="sch-problems" id="sch-problems"></ul>
+      <ul class="sch-problems" id="sch-problems" tabindex="-1" aria-label="Problems with the drawing"></ul>
       <div class="row tight">
         <span class="hint" id="sch-summary"></span>
         <button class="primary" id="sch-use">Use this schematic</button>
@@ -203,12 +205,20 @@ export function mountEditor(root, { onUse }) {
     doc.wires.push({ id: newId("w"), x1: a[0], y1: a[1], x2: b[0], y2: b[1] });
   }
 
-  // -- mouse ----------------------------------------------------------------
+  // -- pointer (mouse, pen or touch) ------------------------------------------
 
   svg.addEventListener("contextmenu", (e) => e.preventDefault());
 
-  svg.addEventListener("mousedown", (e) => {
+  svg.addEventListener("pointerdown", (e) => {
+    if (!e.isPrimary) return; // a second finger never steals the drag
     svg.focus({ preventScroll: true });
+    // render() below swaps the clicked element out of the DOM, and the
+    // browser's own focus-on-press would then land on <body>. Keep the canvas.
+    e.preventDefault();
+    try {
+      svg.setPointerCapture(e.pointerId);
+    } catch {}
+    ui.hover = snap(world(e));
     const w = world(e);
     const g = snap(w);
     if (e.button === 1 || (e.button === 0 && e.shiftKey && ui.tool === "select")) {
@@ -309,7 +319,8 @@ export function mountEditor(root, { onUse }) {
     render();
   });
 
-  window.addEventListener("mousemove", (e) => {
+  svg.addEventListener("pointermove", (e) => {
+    if (!e.isPrimary) return;
     if (ui.pan) {
       const r = svg.getBoundingClientRect();
       const k = ui.view.w / r.width;
@@ -348,7 +359,9 @@ export function mountEditor(root, { onUse }) {
     }
   });
 
-  window.addEventListener("mouseup", () => {
+  /* Ends a drag or pan however the gesture finishes: released, cancelled by
+   * the browser, capture lost, or the window losing focus mid-drag. */
+  function endGesture() {
     if (ui.drag) {
       if (ui.drag.moved) {
         undo.push(ui.drag.before);
@@ -360,7 +373,11 @@ export function mountEditor(root, { onUse }) {
       ui.drag = null;
     }
     ui.pan = null;
-  });
+  }
+  svg.addEventListener("pointerup", endGesture);
+  svg.addEventListener("pointercancel", endGesture);
+  svg.addEventListener("lostpointercapture", endGesture);
+  window.addEventListener("blur", endGesture);
 
   svg.addEventListener("dblclick", () => {
     const input = root.querySelector("#sch-p-value");
@@ -391,20 +408,29 @@ export function mountEditor(root, { onUse }) {
 
   // -- keyboard -------------------------------------------------------------
 
-  root.addEventListener("keydown", (e) => {
+  /* Shortcuts listen on the whole page while the editor is on screen, not just
+   * inside it: clicking Rotate, Undo or empty page space moves focus off the
+   * canvas (a redrawn or disabled button drops it to <body>), and the keys
+   * have to keep working, and keep Ctrl+R / F5 from reloading the page. */
+  document.addEventListener("keydown", (e) => {
+    if (!root.isConnected || root.closest("[hidden]")) return;
     const t = e.target;
-    if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT") {
-      if (e.key === "Escape" || e.key === "Enter") svg.focus({ preventScroll: true });
+    if (t.closest?.("input, textarea, select, [contenteditable]")) {
+      if (root.contains(t) && (e.key === "Escape" || e.key === "Enter")) svg.focus({ preventScroll: true });
       return;
     }
+    // Keys meant for some other control on the page (a tab, an example) stay there.
+    if (t !== document.body && !root.contains(t) && !e.ctrlKey && !e.metaKey) return;
+    if (e.altKey) return;
     const k = e.key.toLowerCase();
     const ctrl = e.ctrlKey || e.metaKey;
     let handled = true;
-    if (ctrl && k === "z") restore(undo, redo);
-    else if (ctrl && (k === "y" || (e.shiftKey && k === "z"))) restore(redo, undo);
+    if (ctrl && (k === "y" || (e.shiftKey && k === "z"))) restore(redo, undo);
+    else if (ctrl && k === "z") restore(undo, redo);
     else if (ctrl && k === "r") rotate();
     else if (ctrl && k === "e") mirror();
     else if (ctrl) handled = false;
+    else if (k.startsWith("arrow") && ui.sel) nudge(k);
     else if (k === "escape") setTool("select");
     else if (k === "delete" || k === "backspace") deleteSelected();
     else if (k === "f5") setTool("delete");
@@ -420,6 +446,27 @@ export function mountEditor(root, { onUse }) {
 
   function selectedPart() {
     return ui.sel?.kind === "part" ? doc.parts.find((p) => p.id === ui.sel.id) : null;
+  }
+
+  /** Arrow keys move the selected part or wire one grid step. */
+  function nudge(k) {
+    const [dx, dy] = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, -1], arrowdown: [0, 1] }[k];
+    snapshot();
+    const p = selectedPart();
+    if (p) {
+      for (const pin of pinsOf(p)) {
+        for (const wr of doc.wires) {
+          if (wr.x1 === pin.x && wr.y1 === pin.y) Object.assign(wr, { x1: wr.x1 + dx, y1: wr.y1 + dy });
+          else if (wr.x2 === pin.x && wr.y2 === pin.y) Object.assign(wr, { x2: wr.x2 + dx, y2: wr.y2 + dy });
+        }
+      }
+      p.x += dx;
+      p.y += dy;
+    } else {
+      const wr = doc.wires.find((w) => w.id === ui.sel.id);
+      if (wr) Object.assign(wr, { x1: wr.x1 + dx, y1: wr.y1 + dy, x2: wr.x2 + dx, y2: wr.y2 + dy });
+    }
+    changed();
   }
 
   function rotate() {
@@ -493,6 +540,7 @@ export function mountEditor(root, { onUse }) {
     const f = e.target.files[0];
     e.target.value = "";
     if (!f) return;
+    $("sch-error").hidden = true;
     try {
       const loaded = JSON.parse(await f.text());
       if (!Array.isArray(loaded.parts) || !Array.isArray(loaded.wires)) throw new Error();
@@ -503,13 +551,15 @@ export function mountEditor(root, { onUse }) {
       fitView();
       changed();
     } catch {
-      alert("That file isn't a schematic saved from AMPierre.");
+      $("sch-error").textContent = `${f.name} isn't a schematic saved from AMPierre. Use Save file to make one.`;
+      $("sch-error").hidden = false;
     }
   };
   $("sch-use").onclick = () => {
     const { netlist, errors } = toNetlist(doc);
     if (errors.length) {
       render();
+      $("sch-problems").focus({ preventScroll: true });
       $("sch-problems").querySelector(".bad")?.scrollIntoView({ block: "nearest" });
       return;
     }
@@ -641,10 +691,10 @@ export function mountEditor(root, { onUse }) {
     $("sch-status").textContent =
       ui.tool === "wire"
         ? ui.wireFrom
-          ? "Click to bend or finish the wire. Ending on a pin or wire finishes it; right-click stops."
+          ? "Click to add a bend. Ending on a pin or another wire finishes it. Right-click or Esc stops."
           : "Click where the wire starts."
         : ui.tool === "place"
-          ? `Click to place a ${SYMBOLS[ui.placing.type].name.toLowerCase()}. Ctrl+R rotates, Ctrl+E mirrors, Esc stops.`
+          ? `Click to place ${withArticle(SYMBOLS[ui.placing.type].name)}. Ctrl+R rotates, Ctrl+E mirrors, Esc stops.`
           : ui.tool === "delete"
             ? "Click a part or wire to delete it. Esc stops."
             : "Click a part to select it, drag to move it. Drag empty space to pan, scroll to zoom.";
@@ -693,7 +743,7 @@ export function mountEditor(root, { onUse }) {
       ${p.type === "ground" ? "" : `<label class="sch-field">${valueLabel}<input type="text" id="sch-p-value" value="${esc(p.value)}"></label>`}
       ${p.type === "dc_source" ? `<label class="sch-check"><input type="checkbox" id="sch-p-power" ${p.power !== false ? "checked" : ""}>
         Powers the circuit (goes on a rail)</label>` : ""}
-      ${p.type === "signal_source" ? `<p class="hint">e.g. SINE(0 1 1k) — 1 V peak at 1 kHz.</p>` : ""}
+      ${p.type === "signal_source" ? `<p class="hint">For example, SINE(0 1 1k) is a 1 V peak sine wave at 1 kHz.</p>` : ""}
       <div class="sch-pbtns">
         <button class="ghost" id="sch-p-rot" title="Ctrl+R">Rotate</button>
         <button class="ghost" id="sch-p-mir" title="Ctrl+E">Mirror</button>
@@ -765,9 +815,11 @@ export function mountEditor(root, { onUse }) {
   function renderProblems() {
     const { netlist, errors, warnings } = toNetlist(doc);
     const list = $("sch-problems");
-    list.innerHTML =
-      errors.map((e) => `<li class="bad">${esc(e)}</li>`).join("") +
-      warnings.map((w) => `<li>${esc(w)}</li>`).join("");
+    /* An empty canvas is a starting point, not a mistake: say how to begin. */
+    list.innerHTML = !doc.parts.length && !doc.wires.length
+      ? `<li class="note">Start by picking a part on the left (or press R, C, L or D), then click the canvas to place it. Or use Load a sample.</li>`
+      : errors.map((e) => `<li class="bad">${esc(e)}</li>`).join("") +
+        warnings.map((w) => `<li>${esc(w)}</li>`).join("");
     const nets = new Set(netlist.components.flatMap((c) => Object.values(c.pins)));
     $("sch-summary").textContent = netlist.components.length
       ? `${netlist.components.length} part${netlist.components.length === 1 ? "" : "s"}, ${nets.size} nets` +
@@ -796,6 +848,13 @@ export function mountEditor(root, { onUse }) {
       svg.focus({ preventScroll: true });
     },
   };
+}
+
+/** "a resistor", "an inductor", "an LED", "an NPN transistor". */
+function withArticle(name) {
+  // Lowercase ordinary words, keep acronyms (LED, NPN, DC) as they are.
+  const text = name.replace(/^[A-Z][a-z]/, (s) => s.toLowerCase());
+  return `${/^([aeiou]|LED|NPN|N-)/i.test(text) ? "an" : "a"} ${text}`;
 }
 
 function slug(s) {

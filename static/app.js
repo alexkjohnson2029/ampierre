@@ -20,6 +20,17 @@ const state = {
 
 const CUSTOM = "__custom__";
 
+/* Smooth scrolling only for people who haven't asked their OS for less motion. */
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const scrollBehavior = () => (reduceMotion.matches ? "auto" : "smooth");
+
+/* Show a message in one of the page's inline error slots (role="alert"). */
+function showError(id, message) {
+  const el = $(id);
+  el.textContent = message;
+  el.hidden = !message;
+}
+
 const escapeHtml = (s) =>
   String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -42,8 +53,10 @@ function showPane(name) {
   for (const pane of ["input", "board"]) {
     $(`pane-${pane}`).hidden = pane !== name;
     $(`tab-${pane}`).classList.toggle("active", pane === name);
+    if (pane === name) $(`tab-${pane}`).setAttribute("aria-current", "true");
+    else $(`tab-${pane}`).removeAttribute("aria-current");
   }
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: scrollBehavior() });
 }
 
 for (const name of ["input", "board"]) {
@@ -116,9 +129,12 @@ async function loadExamples() {
       }
       b.title = ex.title;
       b.onclick = async () => {
+        showError("input-error", "");
         busy(true, "loading the example…");
         try {
           showParse(await api(`/api/examples/${ex.id}`), ex.about || null);
+        } catch (e) {
+          showError("input-error", `Couldn't load that example: ${e.message}`);
         } finally {
           busy(false);
         }
@@ -141,6 +157,9 @@ loadExamples().then(async (list) => {
   busy(true, "loading the example…");
   try {
     showParse(await api(`/api/examples/${ex.id}`), ex.about || null);
+  } catch (e) {
+    showError("input-error", `Couldn't load that example: ${e.message}`);
+    return;
   } finally {
     busy(false);
   }
@@ -153,6 +172,7 @@ loadExamples().then(async (list) => {
 
 const editor = mountEditor($("editor"), {
   onUse: async (netlist) => {
+    showError("input-error", "");
     busy(true, "reading the drawing…");
     try {
       showParse(
@@ -163,7 +183,7 @@ const editor = mountEditor($("editor"), {
         })
       );
     } catch (e) {
-      alert(e.message);
+      showError("input-error", `Couldn't read the drawing: ${e.message}`);
     } finally {
       busy(false);
     }
@@ -175,6 +195,7 @@ function setInputMode(mode) {
   $("step-input").hidden = mode !== "paste";
   for (const id of ["mode-draw", "mode-paste"]) {
     $(id).classList.toggle("active", $(id).dataset.mode === mode);
+    $(id).setAttribute("aria-pressed", String($(id).dataset.mode === mode));
   }
   try {
     localStorage.setItem("ampierre.inputMode", mode);
@@ -202,14 +223,16 @@ function showParse(data, about = null) {
 
   const nets = new Set();
   for (const c of data.netlist.components) for (const n of Object.values(c.pins)) nets.add(n);
+  const nComp = data.netlist.components.length;
+  const nWarn = data.netlist.warnings?.length || 0;
   $("netsummary").textContent =
-    `${data.netlist.components.length} components, ${nets.size} nets` +
-    (data.netlist.warnings?.length ? ` — ${data.netlist.warnings.length} thing(s) to check` : "");
+    `${nComp} ${nComp === 1 ? "component" : "components"}, ${nets.size} ${nets.size === 1 ? "net" : "nets"}` +
+    (nWarn ? `. ${nWarn} ${nWarn === 1 ? "thing" : "things"} to check on the board.` : "");
 
   renderQuestions();
   $("step-parts").hidden = false;
   showPane("input");
-  $("step-parts").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("step-parts").scrollIntoView({ behavior: scrollBehavior(), block: "start" });
 }
 
 function optionUsedMap(q, opt) {
@@ -243,7 +266,8 @@ function renderQuestions() {
       const search = document.createElement("input");
       search.type = "text";
       search.className = "filter";
-      search.placeholder = "Filter parts — try OP484, 555, Schottky…";
+      search.placeholder = "Search, e.g. OP484, 555, Schottky";
+      search.setAttribute("aria-label", `Search parts for ${q.refs.join(", ")}`);
       search.value = state.filters[q.id] || "";
       search.oninput = () => {
         state.filters[q.id] = search.value;
@@ -280,7 +304,7 @@ function renderQuestions() {
     if (needle && !shown.length) {
       const none = document.createElement("p");
       none.className = "hint";
-      none.textContent = "Nothing in the library matches — use “My own part” and type the pinout.";
+      none.textContent = "No part in the library matches. Choose My own part below and enter its pinout.";
       left.prepend(none);
     }
 
@@ -318,11 +342,17 @@ function renderQuestions() {
           chosen.marker?.includes("cathode"),
         title: chosen.label,
       });
-      const unmapped = q.pins.filter((pin) => !chosen.pin_map?.[pin] && !/^\d+$/.test(pin));
+      // Two-lead parts go in by their ends (A/K, +/−), never by pin name.
+      const unmapped = twoLead
+        ? []
+        : q.pins.filter((pin) => !chosen.pin_map?.[pin] && !/^\d+$/.test(pin));
       if (unmapped.length) {
         const warn = document.createElement("p");
         warn.className = "pin-warn";
-        warn.textContent = `${unmapped.join(", ")} isn't a pin name on this package — it'll be matched loosely or skipped. If that's wrong, use “My own part”.`;
+        warn.textContent =
+          unmapped.length === 1
+            ? `${unmapped[0]} isn't a pin name on this package, so AMPierre will match it loosely or skip it. If that's wrong, choose My own part.`
+            : `${unmapped.join(", ")} aren't pin names on this package, so AMPierre will match them loosely or skip them. If that's wrong, choose My own part.`;
         preview.append(warn);
       }
     }
@@ -365,8 +395,8 @@ function customCard(q) {
   head.innerHTML = `<input type="radio" name="pkg-${escapeHtml(q.id)}" value="${CUSTOM}" ${
     state.picks[q.id] === CUSTOM ? "checked" : ""
   }>
-    <span><span class="label">My own part — type the pinout</span>
-    <span class="meta">for anything not in the list</span></span>`;
+    <span><span class="label">My own part</span>
+    <span class="meta">For anything not in the list. You enter the pinout.</span></span>`;
   head.querySelector("input").onchange = () => {
     state.picks[q.id] = CUSTOM;
     renderQuestions();
@@ -430,6 +460,7 @@ function customCard(q) {
 // ---------------------------------------------------------------------------
 
 $("build").onclick = async () => {
+  showError("build-error", "");
   busy(true, "placing parts and routing jumpers…");
   try {
     const packages = {};
@@ -453,7 +484,7 @@ $("build").onclick = async () => {
     });
     showLayout(layout);
   } catch (e) {
-    alert(e.message);
+    showError("build-error", `Couldn't build the board: ${e.message}`);
   } finally {
     busy(false);
   }
@@ -475,8 +506,9 @@ function showLayout(layout) {
       <td>${escapeHtml(info.pretty || c.value || "")}
         <div class="hint">${escapeHtml(info.bands ? info.bands.text : c.orientation)}</div></td>
       <td class="holes">${c.pins.map((p) => `${p.hole.row}${p.hole.col}`).join(" ")}</td>`;
-    tr.onmouseenter = () => highlight(c.pins.map((p) => p.net));
-    tr.onmouseleave = () => highlight(null);
+    tr.tabIndex = 0;
+    tr.onmouseenter = tr.onfocus = () => highlight(c.pins.map((p) => p.net));
+    tr.onmouseleave = tr.onblur = () => highlight(null);
     bom.append(tr);
   }
 
@@ -486,14 +518,17 @@ function showLayout(layout) {
   steps.innerHTML = "";
   for (const step of layout.build_order) {
     const li = document.createElement("li");
-    li.textContent = step.text;
+    const btn = document.createElement("button");
+    btn.className = "step-btn";
+    btn.textContent = step.text;
     if (step.detail) {
-      const small = document.createElement("div");
+      const small = document.createElement("span");
       small.className = "hint";
       small.textContent = step.detail;
-      li.append(small);
+      btn.append(small);
     }
-    li.onmouseenter = () => {
+    li.append(btn);
+    btn.onmouseenter = btn.onfocus = () => {
       if (step.ref) {
         const c = layout.components.find((x) => x.ref === step.ref);
         if (c) highlight(c.pins.map((p) => p.net));
@@ -503,9 +538,8 @@ function showLayout(layout) {
         highlight(step.leads.map((i) => layout.leads[i].net));
       }
     };
-    li.onmouseleave = () => highlight(null);
-    li.onclick = () => gotoStep(step.index);
-    li.style.cursor = "pointer";
+    btn.onmouseleave = btn.onblur = () => highlight(null);
+    btn.onclick = () => gotoStep(step.index);
     steps.append(li);
   }
 
@@ -521,7 +555,10 @@ function showLayout(layout) {
   $("step-board").hidden = false;
   $("board-empty").hidden = true;
   $("tab-board").disabled = false;
-  $("tab-board-sub").textContent = `${layout.components.length} parts · ${layout.wires.length} jumpers`;
+  const nParts = layout.components.length;
+  const nWires = layout.wires.length;
+  $("tab-board-sub").textContent =
+    `${nParts} ${nParts === 1 ? "part" : "parts"} · ${nWires} ${nWires === 1 ? "jumper" : "jumpers"}`;
   showPane("board");
 }
 
@@ -546,12 +583,41 @@ function showProjectCard(about) {
     </div>`;
 }
 
+/* Which board element has keyboard focus, as something that survives a redraw. */
+function boardKey(el) {
+  if (!el?.matches?.("#board [data-tip]")) return null;
+  if (el.dataset.ref) return `[data-ref="${CSS.escape(el.dataset.ref)}"]`;
+  if (el.dataset.wire) return `[data-wire="${el.dataset.wire}"]`;
+  if (el.dataset.lead) return `[data-lead="${el.dataset.lead}"]`;
+  const all = [...$("board").querySelectorAll("[data-tip]")];
+  return all.indexOf(el);
+}
+
+/* Everything with a tooltip is reachable with Tab, and a screen reader hears
+ * the same summary the tooltip shows. */
+function tipLabel(d) {
+  const rows = (d.rows || []).filter((r) => r && r[1]).map((r) => `${r[0]}: ${r[1]}`);
+  return [d.title, d.subtitle, ...rows, d.note, d.warn].filter(Boolean).join(". ");
+}
+
 function drawBoard() {
   const opts =
     state.step === null
       ? {}
       : { upTo: state.step, current: state.step, upcoming: state.upcoming };
+  const key = boardKey(document.activeElement);
   $("board").innerHTML = renderBoard(state.layout, opts);
+  const hosts = [...$("board").querySelectorAll("[data-tip]")];
+  for (const el of hosts) {
+    if (el.closest(".future")) continue; // not on the board yet
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "img");
+    try {
+      el.setAttribute("aria-label", tipLabel(JSON.parse(el.getAttribute("data-tip"))));
+    } catch {}
+  }
+  const again = typeof key === "number" ? hosts[key] : key && $("board").querySelector(key);
+  again?.focus({ preventScroll: true });
 }
 
 $("tl-ghost").onchange = (e) => {
@@ -605,10 +671,14 @@ function gotoStep(i) {
     ? `${steps.length} steps`
     : `step ${i + 1} of ${steps.length}`;
   $("tl-text").textContent = showingAll
-    ? "Whole board. Drag the slider or press Play to build it one part at a time."
+    ? "Whole board. Drag the slider or press Play to build it one step at a time."
     : steps[i].text;
   $("tl-detail").textContent = showingAll ? "" : steps[i].detail || "";
   $("tl-range").value = String(showingAll ? steps.length - 1 : i);
+  $("tl-range").setAttribute(
+    "aria-valuetext",
+    showingAll ? "Whole board" : `Step ${i + 1} of ${steps.length}: ${steps[i].text}`
+  );
 
   for (const chip of $("tl-strip").children) {
     const n = Number(chip.dataset.step);
@@ -617,7 +687,7 @@ function gotoStep(i) {
   }
   if (!showingAll) {
     const active = $("tl-strip").querySelector(".tl-chip.active");
-    active?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    active?.scrollIntoView({ behavior: scrollBehavior(), block: "nearest", inline: "center" });
   }
 }
 
@@ -655,11 +725,16 @@ function stopPlaying() {
   $("tl-play").textContent = "▶ Play";
 }
 
+/* Left/Right step through the build, but only on the Board tab and never
+ * while a form control, or a modified key combination, wants the arrows. */
 document.addEventListener("keydown", (e) => {
-  if ($("step-board").hidden) return;
-  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  if ($("pane-board").hidden || $("step-board").hidden) return;
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  if (e.target.closest?.("input, textarea, select, [contenteditable]")) return;
   if (e.key === "ArrowRight") $("tl-next").click();
-  if (e.key === "ArrowLeft") $("tl-prev").click();
+  else if (e.key === "ArrowLeft") $("tl-prev").click();
+  else return;
+  e.preventDefault();
 });
 
 // ---------------------------------------------------------------------------
@@ -683,6 +758,7 @@ for (const id of ["style-flow", "style-compact"]) {
     state.style = style;
     for (const other of ["style-flow", "style-compact"]) {
       $(other).classList.toggle("active", other === id);
+      $(other).setAttribute("aria-pressed", String(other === id));
     }
     $("build").click(); // same parts, same picks, new layout
   };
@@ -714,24 +790,64 @@ function tooltipHtml(d) {
     ${d.warn ? `<div class="t-warn">${escapeHtml(d.warn)}</div>` : ""}`;
 }
 
-document.addEventListener("mousemove", (e) => {
-  const host = e.target.closest?.("[data-tip]");
-  if (!host) {
-    tooltip.hidden = true;
-    highlight(null);
-    return;
+/* The tooltip follows the mouse, sits under a tapped part on a touch screen,
+ * and under the focused part for keyboard users. Esc hides it. */
+let tipHost = null;
+
+function showTip(host, x, y) {
+  if (host !== tipHost) {
+    let data;
+    try {
+      data = JSON.parse(host.getAttribute("data-tip"));
+    } catch {
+      return hideTip();
+    }
+    tipHost = host;
+    tooltip.innerHTML = tooltipHtml(data);
+    tooltip.hidden = false;
+    const nets = new Set();
+    if (host.dataset.net) nets.add(host.dataset.net);
+    host.querySelectorAll?.("[data-net]").forEach((n) => nets.add(n.dataset.net));
+    highlight(nets.size ? [...nets] : null);
   }
-  tooltip.innerHTML = tooltipHtml(JSON.parse(host.getAttribute("data-tip")));
-  tooltip.hidden = false;
   const pad = 16;
   const r = tooltip.getBoundingClientRect();
-  tooltip.style.left = `${Math.max(8, Math.min(e.clientX + pad, window.innerWidth - r.width - 8))}px`;
-  tooltip.style.top = `${Math.max(8, Math.min(e.clientY + pad, window.innerHeight - r.height - 8))}px`;
+  tooltip.style.left = `${Math.max(8, Math.min(x + pad, window.innerWidth - r.width - 8))}px`;
+  tooltip.style.top = `${Math.max(8, Math.min(y + pad, window.innerHeight - r.height - 8))}px`;
+}
 
-  const nets = new Set();
-  if (host.dataset.net) nets.add(host.dataset.net);
-  host.querySelectorAll?.("[data-net]").forEach((n) => nets.add(n.dataset.net));
-  highlight(nets.size ? [...nets] : null);
+function hideTip() {
+  if (!tipHost && tooltip.hidden) return;
+  tipHost = null;
+  tooltip.hidden = true;
+  highlight(null);
+}
+
+document.addEventListener("pointermove", (e) => {
+  if (e.pointerType !== "mouse") return;
+  const host = e.target.closest?.("[data-tip]");
+  if (host) showTip(host, e.clientX, e.clientY);
+  else if (tipHost && tipHost !== document.activeElement) hideTip();
+});
+
+document.addEventListener("pointerdown", (e) => {
+  if (e.pointerType === "mouse") return;
+  const host = e.target.closest?.("[data-tip]");
+  if (host) showTip(host, e.clientX, e.clientY);
+  else hideTip();
+});
+
+document.addEventListener("focusin", (e) => {
+  const host = e.target.closest?.("[data-tip]");
+  if (!host) return;
+  const r = host.getBoundingClientRect();
+  showTip(host, r.left, r.bottom - 8);
+});
+document.addEventListener("focusout", (e) => {
+  if (e.target === tipHost) hideTip();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") hideTip();
 });
 
 /* Light up everything on the same net, dim the rest. Seeing one node at a
