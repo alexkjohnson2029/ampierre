@@ -433,7 +433,7 @@ a.primary-link:hover { background: var(--accent-hover); }
 
 .sch-canvas-wrap { position: relative; min-width: 0; }
 .sch-canvas {
-  display: block; width: 100%; height: 600px; background: var(--mint);
+  display: block; width: 100%; height: 600px; background: var(--bg);
   border: 1px solid var(--line-strong); cursor: default; user-select: none; outline: none;
 }
 .sch-canvas:focus { border-color: var(--accent); }
