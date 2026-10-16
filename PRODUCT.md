@@ -55,7 +55,7 @@ understanding why each part sits where it does.
   subcircuits become chips with a user-picked pinout.
 - Rails: top positive rail is the positive supply, bottom positive rail the negative
   supply, both negative rails ground.
-- Two layout styles: Spacious (one net per column, easiest to trace) and Compact.
+- One layout style: one net per column, easiest to trace.
 - **AI:** no AI in the product for now. An LLM step (e.g. reading schematic screenshots)
   may be added later; that is undecided, and any such step must not compromise the
   deterministic, verified layout.
@@ -71,7 +71,7 @@ understanding why each part sits where it does.
 ## Evidence on Hand
 
 - Example circuits in `examples/`: three-band audio equalizer (AJ's own build, featured;
-  8 op-amps in two OP484s, 4 trimmer pots, 34 parts, ±4.5 V supply), full-wave bridge
+  8 op-amps in two OP484s, 4 trimmer pots, 38 parts, ±4.5 V supply), full-wave bridge
   rectifier, common-emitter amplifier, non-inverting amplifier.
 - No testimonials, usage numbers, course adoptions or press exist. Do not invent them.
 

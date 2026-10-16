@@ -14,7 +14,6 @@ const state = {
   layout: null,
   step: null, // null = whole board
   upcoming: "hidden", // or "ghost" — what to do with parts not placed yet
-  style: "flow", // or "flow-compact"
   playing: null,
 };
 
@@ -479,7 +478,6 @@ $("build").onclick = async () => {
         netlist: state.netlist,
         packages,
         custom_packages,
-        style: state.style,
       }),
     });
     showLayout(layout);
@@ -769,19 +767,6 @@ $("download").onclick = () => {
   a.click();
   URL.revokeObjectURL(a.href);
 };
-
-for (const id of ["style-flow", "style-compact"]) {
-  $(id).onclick = async () => {
-    const style = $(id).dataset.style;
-    if (style === state.style || !state.layout) return;
-    state.style = style;
-    for (const other of ["style-flow", "style-compact"]) {
-      $(other).classList.toggle("active", other === id);
-      $(other).setAttribute("aria-pressed", String(other === id));
-    }
-    $("build").click(); // same parts, same picks, new layout
-  };
-}
 
 // Drop any ?example=… so a featured build opened from the About page doesn't
 // load itself straight back onto the board.

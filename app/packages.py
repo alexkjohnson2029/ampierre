@@ -229,10 +229,13 @@ HC04 = _dip(
     note="Input/output alternate along the package; power on 14 and 7.",
 )
 
+# Generic DIPs are for a chip the library doesn't know, read from a netlist as
+# numbered pins ("1".."8"). They are never offered for an op-amp: its pins are
+# named (IN+, OUT, V+), and a package that only knows numbers can't place one.
 GENERIC_DIP8 = _dip(
     "dip8_generic",
     "Generic DIP-8 (pins by number)",
-    (ComponentKind.IC, ComponentKind.OPAMP),
+    (ComponentKind.IC,),
     8,
     {i: f"Pin {i}" for i in range(1, 9)},
 )
@@ -276,7 +279,12 @@ def _to92(pid: str, label: str, kinds, order: str, note: str = "") -> Package:
 
 
 TO92_EBC_NPN = _to92(
-    "to92_ebc_npn", "2N3904 / PN2222 — NPN, TO-92 (E–B–C)", [ComponentKind.NPN], "EBC"
+    "to92_ebc_npn",
+    "2N3904 / PN2222 — NPN, TO-92 (E–B–C)",
+    [ComponentKind.NPN],
+    "EBC",
+    note="Flat face toward you, leads down: E – B – C left to right. Careful with "
+    "2N2222s: the PN2222A is E–B–C, but onsemi's P2N2222A is C–B–E.",
 )
 TO92_CBE_NPN = _to92(
     "to92_cbe_npn", "BC547 / BC337 — NPN, TO-92 (C–B–E)", [ComponentKind.NPN], "CBE"
@@ -291,7 +299,15 @@ TO92_CBE_PNP = _to92(
     "to92_cbe_pnp", "BC557 — PNP, TO-92 (C–B–E)", [ComponentKind.PNP], "CBE"
 )
 TO92_SGD_NMOS = _to92(
-    "to92_sgd_nmos", "2N7000 / BS170 — N-MOSFET, TO-92 (S–G–D)", [ComponentKind.NMOS], "SGD"
+    "to92_sgd_nmos", "2N7000 — N-MOSFET, TO-92 (S–G–D)", [ComponentKind.NMOS], "SGD"
+)
+TO92_DGS_NMOS = _to92(
+    "to92_dgs_nmos",
+    "BS170 — N-MOSFET, TO-92 (D–G–S)",
+    [ComponentKind.NMOS],
+    "DGS",
+    note="Flat face toward you, leads down: D – G – S left to right — the mirror "
+    "image of a 2N7000, so the two don't swap in place.",
 )
 TO92_GDS_NMOS = _to92(
     "to92_gds_nmos", "Generic N-MOSFET, TO-92 (G–D–S)", [ComponentKind.NMOS], "GDS"
@@ -513,6 +529,7 @@ ALL_PACKAGES: list[Package] = [
     TO92_EBC_PNP,
     TO92_CBE_PNP,
     TO92_SGD_NMOS,
+    TO92_DGS_NMOS,
     TO92_GDS_NMOS,
     TO92_SGD_PMOS,
     TO92_GDS_PMOS,
@@ -588,9 +605,17 @@ def part_name(value: str | None, pkg: Package) -> str | None:
     return names[0]
 
 
+def fits(pkg: Package, kind: ComponentKind) -> bool:
+    """Can this package hold a part of this kind?"""
+    return kind in pkg.kinds
+
+
 def get(package_id: str | None, kind: ComponentKind) -> Package:
-    if package_id and package_id in BY_ID:
-        return BY_ID[package_id]
+    """The picked package, or the default for the kind when nothing (or a
+    package for a different kind of part) was picked."""
+    pkg = BY_ID.get(package_id or "")
+    if pkg is not None and fits(pkg, kind):
+        return pkg
     return BY_ID[DEFAULT_FOR_KIND[kind]]
 
 

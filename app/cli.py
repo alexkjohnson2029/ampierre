@@ -24,9 +24,8 @@ def main(argv: list[str] | None = None) -> int:
         "-s",
         "--style",
         default="flow",
-        choices=("flow", "flow-compact", "packed"),
-        help="flow: schematic-shaped (default); flow-compact: the same, tighter; "
-        "packed: fill the board",
+        choices=("flow", "packed"),
+        help="flow: schematic-shaped (default); packed: fill the board",
     )
     args = ap.parse_args(argv)
 

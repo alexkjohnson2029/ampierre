@@ -36,8 +36,12 @@
         "IN-A": "FB",
         "OUT A": "VOUT",
         "V+": "V+",
-        "V-": "V-"
-      }
+        "V-": "V-",
+        "IN+B": "GND",
+        "IN-B": "SpareB",
+        "OUT B": "SpareB"
+      },
+      "notes": "Section B isn't used by the circuit, so it is tied off as a follower of ground (IN+B to GND, OUT B to IN-B). Left floating, a spare section can oscillate and warm the chip."
     },
     {
       "ref": "R1",
