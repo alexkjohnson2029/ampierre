@@ -60,7 +60,7 @@ body {
 /* header ----------------------------------------------------------------- */
 .top {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 26px;
   padding: 18px 32px;
@@ -78,10 +78,6 @@ body {
 h1, h2, h3, h4 { text-wrap: balance; }
 h1 { font-size: 23px; margin: 0; letter-spacing: -0.015em; }
 .tagline { margin: 1px 0 0; font-size: 13px; color: var(--silk-muted); }
-.blurb {
-  margin: 0; font-size: 13.5px; color: var(--silk-muted);
-  max-width: 68ch; border-left: 2px solid var(--copper); padding-left: 16px;
-}
 .top a.ghost { background: transparent; color: var(--silk); border-color: rgba(255, 255, 255, 0.4); }
 .top a.ghost:hover { background: var(--indigo-raised); border-color: var(--gold); }
 .top :focus-visible { outline-color: var(--gold); }
@@ -352,7 +348,6 @@ a.ghost { font-size: 13px; color: var(--muted); text-decoration: none; border: 1
 }
 @media (max-width: 900px) {
   .top { grid-template-columns: 1fr auto; gap: 14px; }
-  .blurb { grid-column: 1 / -1; border-left: 0; padding-left: 0; }
   .panels { grid-template-columns: 1fr; }
   main, .top { padding-left: 16px; padding-right: 16px; }
   .tab-sub { display: none; }
@@ -367,11 +362,8 @@ a.brand { display: flex; align-items: center; gap: 12px; color: inherit; text-de
 .about h3 { font-size: 19px; margin: 0 0 12px; letter-spacing: -0.01em; text-transform: none; color: var(--ink); }
 .about p { max-width: 64ch; }
 
-.about-hero { border-bottom: 3px solid var(--copper); padding-bottom: 30px; }
-.about-hero h2 { font-size: 34px; line-height: 1.15; margin: 0 0 14px; letter-spacing: -0.02em; max-width: 22ch; }
-.about-hero .lead { font-size: 17px; color: var(--body-ink); margin: 0; }
-
 .about-story p { font-size: 15.5px; }
+.about-story h4 { font-size: 16px; margin: 26px 0 8px; }
 
 .learn-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .learn-card { background: #fff; border: 1px solid var(--line-strong); padding: 18px 20px; }
@@ -424,7 +416,6 @@ a.primary-link:hover { background: var(--accent-hover); }
   .learn-grid { grid-template-columns: 1fr; }
   .learn-wide { grid-template-columns: 1fr; }
   .about-how { grid-template-columns: 1fr; gap: 10px; }
-  .about-hero h2 { font-size: 27px; }
   .credit { flex-direction: column; }
 }
 
