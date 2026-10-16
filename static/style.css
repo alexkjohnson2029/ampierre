@@ -78,6 +78,7 @@ body {
 h1, h2, h3, h4 { text-wrap: balance; }
 h1 { font-size: 23px; margin: 0; letter-spacing: -0.015em; }
 .tagline { margin: 1px 0 0; font-size: 13px; color: var(--silk-muted); }
+.top > a.ghost { justify-self: end; }
 .top a.ghost { background: transparent; color: var(--silk); border-color: rgba(255, 255, 255, 0.4); }
 .top a.ghost:hover { background: var(--indigo-raised); border-color: var(--gold); }
 .top :focus-visible { outline-color: var(--gold); }
