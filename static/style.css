@@ -30,7 +30,7 @@
   --area-ink: #1f1d1a;
   --area-muted: #6c675e;
   --area-line: #c6bfb1;
-  --area-tray: #eceae4;
+  --board-backdrop: #d3e5ee; /* Steel Blue, softened: the board reads white on it */
 }
 
 * { box-sizing: border-box; border-radius: 0 !important; }
@@ -164,7 +164,7 @@ a.ghost { font-size: 13px; color: var(--muted); text-decoration: none; border: 1
 .board-head h2 { font-size: 16px; margin: 0; }
 .board-scroll {
   overflow-x: auto; padding: 14px;
-  background: var(--area-tray); border: 1px solid var(--area-line);
+  background: var(--board-backdrop); border: 1px solid var(--line-strong);
 }
 .board-scroll svg { display: block; }
 .legend { margin: 10px 0 0; }
