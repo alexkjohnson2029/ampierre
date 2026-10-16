@@ -1,10 +1,12 @@
-/* AMPierre — flat, square-cornered. Palette: Mint Cream, Graphite,
- * Twilight Indigo, Royal Gold, Steel Blue. */
+/* AMPierre — flat, square-cornered. Palette: Mint Cream, Light Yellow,
+ * Vanilla Custard, Royal Gold, Graphite, Twilight Indigo, Steel Blue. */
 
 :root {
   --mint: #f7fff7;
   --graphite: #343434;
   --indigo: #2f3061;
+  --light-yellow: #f9f9d5;
+  --custard: #fbf3b2;
   --gold: #ffe66d;
   --steel: #6ca6c1;
 
@@ -14,16 +16,16 @@
   --line: #d4e4e0;
   --line-strong: #a9c6d2;
   --card: #ffffff;
-  --panel: #fbfffb;
+  --panel: var(--light-yellow);
   --accent: var(--indigo);
   --accent-hover: #232449;
   --accent-ink: var(--mint);
-  --accent-soft: #eef0f9;
+  --accent-soft: var(--custard);
   --steel-soft: #e4f0f6;
   --body-ink: #43494b;
   --warn: #6e5a00;
-  --warn-bg: #fff8d6;
-  --warn-line: #f0dc7a;
+  --warn-bg: var(--custard);
+  --warn-line: var(--gold);
 
   /* The schematic canvas and the breadboard keep their own colours. */
   --area-accent: #b4552d;
@@ -218,7 +220,7 @@ a.ghost { font-size: 13px; color: var(--muted); text-decoration: none; border: 1
 .tl-chip.wire .t { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
 .tl-chip.lead .t { color: var(--accent); font-weight: 600; }
 .tl-chip.lead.active .t, .tl-chip.lead.done .t { color: inherit; }
-.tl-chip.done { background: var(--steel-soft); color: var(--muted); }
+.tl-chip.done { background: var(--light-yellow); color: var(--muted); }
 .tl-chip.active { background: var(--accent); border-color: var(--accent); color: var(--gold); font-weight: 600; }
 .tl-chip.active .n { opacity: 0.85; }
 
@@ -379,7 +381,7 @@ a.primary-link:hover { background: var(--accent-hover); }
 .project-facts { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0 0 10px; padding: 0; }
 .project-facts li {
   padding: 2px 9px; font-size: 12.5px; color: var(--ink);
-  background: var(--steel-soft); border: 1px solid var(--line);
+  background: var(--light-yellow); border: 1px solid var(--line);
 }
 @media (max-width: 720px) {
   .project-card { flex-direction: column; gap: 10px; }
