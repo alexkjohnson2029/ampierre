@@ -571,11 +571,10 @@ function showProjectCard(about) {
   const link = about.link
     ? `<a class="primary-link" href="${escapeHtml(about.link.href)}" target="_blank" rel="noopener">${escapeHtml(
         about.link.text
-      )} →</a>`
+      )}</a>`
     : "";
   card.innerHTML = `<div class="credit-mark" aria-hidden="true">AJ</div>
     <div class="project-body">
-      <p class="eyebrow">${escapeHtml(about.eyebrow || "Featured build")}</p>
       <h3>${escapeHtml(about.headline || "")}</h3>
       <p>${escapeHtml(about.blurb || "")}</p>
       ${facts ? `<ul class="project-facts">${facts}</ul>` : ""}
@@ -683,13 +682,33 @@ function gotoStep(i) {
   for (const chip of $("tl-strip").children) {
     const n = Number(chip.dataset.step);
     chip.classList.toggle("active", !showingAll && n === i);
-    chip.classList.toggle("done", !showingAll && n < i);
+    // On the whole board every pad is soldered.
+    chip.classList.toggle("done", showingAll || n < i);
   }
+  requestAnimationFrame(updateSpan);
   if (!showingAll) {
     const active = $("tl-strip").querySelector(".tl-chip.active");
     active?.scrollIntoView({ behavior: scrollBehavior(), block: "nearest", inline: "center" });
   }
 }
+
+/* Like the guide words at the head of a dictionary page: which steps the
+ * strip is showing right now, so a long build never loses its place. */
+function updateSpan() {
+  const strip = $("tl-strip");
+  const box = strip.getBoundingClientRect();
+  const seen = [...strip.children].filter((c) => {
+    const r = c.getBoundingClientRect();
+    return r.right > box.left + 4 && r.left < box.right - 4;
+  });
+  const all = strip.children.length;
+  $("tl-span").textContent =
+    seen.length && seen.length < all
+      ? `showing ${seen[0].dataset.step}–${seen[seen.length - 1].dataset.step} ·`
+      : "";
+}
+$("tl-strip").addEventListener("scroll", updateSpan, { passive: true });
+window.addEventListener("resize", updateSpan);
 
 $("tl-range").oninput = (e) => {
   stopPlaying();
@@ -711,7 +730,7 @@ $("tl-play").onclick = () => {
   if (state.playing) return stopPlaying();
   const steps = state.layout?.build_order || [];
   if (!steps.length) return;
-  $("tl-play").textContent = "❚❚ Pause";
+  $("tl-play").innerHTML = `<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="fill" d="M4 3h3v10H4zM9 3h3v10H9z"/></svg> Pause`;
   if (state.step === null) gotoStep(0);
   state.playing = setInterval(() => {
     if (state.step >= steps.length - 1) return stopPlaying();
@@ -722,7 +741,7 @@ $("tl-play").onclick = () => {
 function stopPlaying() {
   if (state.playing) clearInterval(state.playing);
   state.playing = null;
-  $("tl-play").textContent = "▶ Play";
+  $("tl-play").innerHTML = `<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="fill" d="M5 3l8 5-8 5z"/></svg> Play`;
 }
 
 /* Left/Right step through the build, but only on the Board tab and never

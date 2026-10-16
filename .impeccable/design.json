@@ -1,0 +1,495 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T06:00:51+00:00",
+  "title": "Design System: AMPierre",
+  "extensions": {
+    "colorMeta": {
+      "indigo": {
+        "role": "primary",
+        "displayName": "Solder-Mask Indigo",
+        "canonical": "#2f3061",
+        "tonalRamp": [
+          "#191934",
+          "#2a2a56",
+          "#3a3b78",
+          "#5052a5",
+          "#7677bc",
+          "#9fa0d0",
+          "#cbcce6",
+          "#eeeef7"
+        ]
+      },
+      "indigo-deep": {
+        "role": "primary",
+        "displayName": "Mask in Shadow",
+        "canonical": "#23244a",
+        "tonalRamp": [
+          "#191934",
+          "#2a2a56",
+          "#3a3b78",
+          "#5052a5",
+          "#7677bc",
+          "#9fa0d0",
+          "#cbcce6",
+          "#eeeef7"
+        ]
+      },
+      "indigo-raised": {
+        "role": "primary",
+        "displayName": "Mask Catching Light",
+        "canonical": "#3d3e78",
+        "tonalRamp": [
+          "#191934",
+          "#2a2a56",
+          "#3a3b78",
+          "#5052a5",
+          "#7677bc",
+          "#9fa0d0",
+          "#cbcce6",
+          "#eeeef7"
+        ]
+      },
+      "gold": {
+        "role": "secondary",
+        "displayName": "ENIG Gold",
+        "canonical": "#ffe66d",
+        "tonalRamp": [
+          "#4c3f00",
+          "#806a00",
+          "#b29400",
+          "#f5cb00",
+          "#ffdc33",
+          "#ffe770",
+          "#fff2b2",
+          "#fffbe5"
+        ]
+      },
+      "gold-soft": {
+        "role": "secondary",
+        "displayName": "Pad Glow",
+        "canonical": "#fff4bf",
+        "tonalRamp": [
+          "#4c3f00",
+          "#806a00",
+          "#b29400",
+          "#f5cb00",
+          "#ffdc33",
+          "#ffe770",
+          "#fff2b2",
+          "#fffbe5"
+        ]
+      },
+      "copper": {
+        "role": "tertiary",
+        "displayName": "Copper Trace",
+        "canonical": "#b87333",
+        "tonalRamp": [
+          "#3c2511",
+          "#643e1c",
+          "#8c5727",
+          "#c07835",
+          "#d3975f",
+          "#e0b68f",
+          "#eed8c3",
+          "#f9f2eb"
+        ]
+      },
+      "copper-deep": {
+        "role": "tertiary",
+        "displayName": "Soldered Copper",
+        "canonical": "#8a5420",
+        "tonalRamp": [
+          "#3c2511",
+          "#643e1c",
+          "#8c5727",
+          "#c07835",
+          "#d3975f",
+          "#e0b68f",
+          "#eed8c3",
+          "#f9f2eb"
+        ]
+      },
+      "silk": {
+        "role": "neutral",
+        "displayName": "Silkscreen White",
+        "canonical": "#ffffff"
+      },
+      "silk-muted": {
+        "role": "neutral",
+        "displayName": "Faded Silkscreen",
+        "canonical": "#c9cae6"
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Lavender Work Ground",
+        "canonical": "#f3f3f8",
+        "tonalRamp": [
+          "#1c1c30",
+          "#2f2f51",
+          "#424271",
+          "#5a5a9b",
+          "#7e7eb4",
+          "#a5a5ca",
+          "#cfcfe3",
+          "#efeff6"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "canonical": "#ffffff"
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Tool Panel",
+        "canonical": "#f0f0f7"
+      },
+      "hover-soft": {
+        "role": "neutral",
+        "displayName": "Hover Wash",
+        "canonical": "#e8e8f3"
+      },
+      "board-backdrop": {
+        "role": "neutral",
+        "displayName": "Board Backdrop",
+        "canonical": "#dedfeb"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1f2033",
+        "tonalRamp": [
+          "#1d1e30",
+          "#30324f",
+          "#43466f",
+          "#5d6098",
+          "#8083b2",
+          "#a6a8c9",
+          "#cfd0e2",
+          "#efeff5"
+        ]
+      },
+      "body-ink": {
+        "role": "neutral",
+        "displayName": "Body Ink",
+        "canonical": "#3a3c55"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#565873",
+        "tonalRamp": [
+          "#21212c",
+          "#373849",
+          "#4c4e66",
+          "#696b8c",
+          "#8a8ca8",
+          "#adafc2",
+          "#d3d4de",
+          "#f0f1f4"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#dcdce8"
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "#b9bacf"
+      },
+      "control-line": {
+        "role": "neutral",
+        "displayName": "Control Edge",
+        "canonical": "#8b8ca6"
+      },
+      "warn": {
+        "role": "state",
+        "displayName": "Amber Warn",
+        "canonical": "#6e5a00",
+        "tonalRamp": [
+          "#4c3f00",
+          "#806800",
+          "#b29200",
+          "#f5c800",
+          "#ffda33",
+          "#ffe570",
+          "#fff1b2",
+          "#fffae5"
+        ]
+      },
+      "error": {
+        "role": "state",
+        "displayName": "Fault Red",
+        "canonical": "#b3261e",
+        "tonalRamp": [
+          "#420e0b",
+          "#6d1712",
+          "#99201a",
+          "#d22d23",
+          "#e25850",
+          "#eb8a85",
+          "#f4c0bd",
+          "#fbeae9"
+        ]
+      },
+      "area-accent": {
+        "role": "drawing",
+        "displayName": "Schematic Copper (canvas selection)",
+        "canonical": "#a8601f",
+        "tonalRamp": [
+          "#41250c",
+          "#6c3e14",
+          "#97561c",
+          "#cf7626",
+          "#df9553",
+          "#e9b586",
+          "#f3d7be",
+          "#fbf2e9"
+        ]
+      },
+      "area-ink": {
+        "role": "drawing",
+        "displayName": "Schematic Ink",
+        "canonical": "#1f1d1a"
+      },
+      "area-muted": {
+        "role": "drawing",
+        "displayName": "Schematic Muted",
+        "canonical": "#6c675e"
+      },
+      "area-line": {
+        "role": "drawing",
+        "displayName": "Board Primer Edge",
+        "canonical": "#c6bfb1"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "About page hero only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Header wordmark; About credit heading."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card headings with an indigo step number."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default text; long-form held to 64ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase headings of panels inside a card (Parts, Build order, Check these)."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Netlists, hole lists, pin tables, key bindings."
+      }
+    },
+    "openDecisions": [
+      {
+        "name": "Silkscreen display face",
+        "status": "open",
+        "note": "A sourced silkscreen-style display face for the wordmark and headings is pending the owner's approval to download a font. The system UI stack stands until then."
+      }
+    ],
+    "shadows": [
+      {
+        "name": "tooltip-lift",
+        "value": "0 12px 30px rgba(0, 0, 0, 0.3)",
+        "purpose": "The floating tooltip only."
+      },
+      {
+        "name": "pad-bar-tab",
+        "value": "inset 0 -4px 0 #ffe66d",
+        "purpose": "Gold bar marking the active tab."
+      },
+      {
+        "name": "pad-bar-segment",
+        "value": "inset 0 -3px 0 #ffe66d",
+        "purpose": "Gold bar marking the active segmented button."
+      },
+      {
+        "name": "hairline-badge",
+        "value": "inset 0 0 0 1px #b87333",
+        "purpose": "Copper outline of the featured-example badge."
+      }
+    ],
+    "motion": [
+      {
+        "name": "spin",
+        "value": "rotate(360deg) 0.8s linear infinite; 2.4s under prefers-reduced-motion",
+        "purpose": "Busy indicator ring only; the interface has no other animated transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "editor-two-col",
+        "value": "1100px"
+      },
+      {
+        "name": "picker-stack",
+        "value": "1040px"
+      },
+      {
+        "name": "shell-compact",
+        "value": "900px"
+      },
+      {
+        "name": "about-stack",
+        "value": "860px"
+      },
+      {
+        "name": "project-stack",
+        "value": "720px"
+      },
+      {
+        "name": "editor-one-col",
+        "value": "700px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Square white button for secondary actions on light ground.",
+      "html": "<button class=\"ds-btn\">Download SVG</button>",
+      "css": ".ds-btn { font: 14px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 8px 14px; border: 1px solid var(--line-strong, #b9bacf); background: #fff; color: var(--ink, #1f2033); border-radius: 0; cursor: pointer; } .ds-btn:hover { border-color: var(--indigo, #2f3061); } .ds-btn:focus-visible { outline: 2px solid var(--focus, #2f3061); outline-offset: 2px; } .ds-btn:disabled { opacity: 0.45; cursor: default; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Indigo solder-mask button for the main action in a card.",
+      "html": "<button class=\"ds-btn-primary\">Build the board</button>",
+      "css": ".ds-btn-primary { font: 600 14px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 8px 14px; border: 1px solid var(--indigo, #2f3061); background: var(--indigo, #2f3061); color: var(--silk, #fff); border-radius: 0; cursor: pointer; } .ds-btn-primary:hover { background: var(--indigo-deep, #23244a); border-color: var(--indigo-deep, #23244a); } .ds-btn-primary:focus-visible { outline: 2px solid var(--indigo, #2f3061); outline-offset: 2px; }"
+    },
+    {
+      "name": "Shell Button",
+      "kind": "button",
+      "refersTo": "button-shell",
+      "description": "Outlined control on the indigo shell (header, timeline).",
+      "html": "<div class=\"ds-shell\"><button class=\"ds-btn-shell\">Next step</button></div>",
+      "css": ".ds-shell { background: var(--indigo, #2f3061); padding: 12px 14px; } .ds-btn-shell { font: 13px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 5px 10px; background: transparent; color: var(--silk, #fff); border: 1px solid rgba(255,255,255,0.4); border-radius: 0; cursor: pointer; } .ds-btn-shell:hover { background: var(--indigo-raised, #3d3e78); border-color: var(--gold, #ffe66d); } .ds-btn-shell:focus-visible { outline: 2px solid var(--gold, #ffe66d); outline-offset: 2px; }"
+    },
+    {
+      "name": "Example Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Example-circuit chips; the featured one takes a copper border and badge.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip ds-chip-featured\"><span class=\"ds-badge\">Example</span>Audio equalizer</button><button class=\"ds-chip\">Bridge rectifier</button></div>",
+      "css": ".ds-chips { display: flex; gap: 6px; flex-wrap: wrap; } .ds-chip { font: 13px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 5px 10px; border: 1px solid var(--line-strong, #b9bacf); background: #fff; color: var(--ink, #1f2033); border-radius: 0; cursor: pointer; } .ds-chip:hover { border-color: var(--indigo, #2f3061); } .ds-chip:focus-visible { outline: 2px solid var(--indigo, #2f3061); outline-offset: 2px; } .ds-chip-featured { border-color: var(--copper, #b87333); font-weight: 600; } .ds-badge { display: inline-block; margin-right: 7px; padding: 1px 6px; color: var(--copper-deep, #8a5420); box-shadow: inset 0 0 0 1px var(--copper, #b87333); font: 700 11px/1.5 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; letter-spacing: 0.02em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Square white field with a 3.3:1 control edge and inset indigo focus.",
+      "html": "<label class=\"ds-field\"><span>Part value</span><input class=\"ds-input\" type=\"text\" value=\"10k\"></label>",
+      "css": ".ds-field { display: block; font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; } .ds-field span { display: block; font-size: 13px; color: var(--muted, #565873); margin-bottom: 5px; } .ds-input { width: 100%; box-sizing: border-box; padding: 9px 11px; font: inherit; font-size: 14px; border: 1px solid var(--control-line, #8b8ca6); background: #fff; color: var(--ink, #1f2033); border-radius: 0; caret-color: var(--indigo, #2f3061); } .ds-input:focus-visible { outline: 2px solid var(--indigo, #2f3061); outline-offset: -2px; }"
+    },
+    {
+      "name": "Work Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "White square card on lavender ground with an indigo step number.",
+      "html": "<div class=\"ds-ground\"><section class=\"ds-card\"><h2><span class=\"ds-step\">2</span> Pick the real parts</h2><p>Choose the package that is going in the board.</p></section></div>",
+      "css": ".ds-ground { background: var(--bg, #f3f3f8); padding: 18px; font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--ink, #1f2033); } .ds-card { background: #fff; border: 1px solid var(--line-strong, #b9bacf); padding: 20px 22px; border-radius: 0; } .ds-card h2 { font-size: 16px; margin: 0 0 10px; display: flex; align-items: center; gap: 9px; } .ds-step { display: grid; place-items: center; width: 20px; height: 20px; background: var(--indigo, #2f3061); color: var(--gold, #ffe66d); font-size: 11px; font-weight: 700; } .ds-card p { margin: 0; font-size: 14px; color: var(--body-ink, #3a3c55); }"
+    },
+    {
+      "name": "Part Option",
+      "kind": "custom",
+      "refersTo": "option-selected",
+      "description": "Selectable part rows; selected takes indigo border and gold-soft fill.",
+      "html": "<div class=\"ds-options\"><label class=\"ds-option ds-sel\"><input type=\"radio\" name=\"o\" checked><span><b>LM741</b><small>DIP-8, single op-amp</small></span></label><label class=\"ds-option\"><input type=\"radio\" name=\"o\"><span><b>TL072</b><small>DIP-8, dual op-amp</small></span></label></div>",
+      "css": ".ds-options { display: flex; flex-direction: column; gap: 7px; font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; } .ds-option { display: flex; gap: 9px; align-items: flex-start; border: 1px solid var(--line, #dcdce8); padding: 9px 11px; background: #fff; cursor: pointer; } .ds-option:hover { border-color: var(--indigo, #2f3061); } .ds-option.ds-sel { border-color: var(--indigo, #2f3061); background: var(--gold-soft, #fff4bf); } .ds-option b { display: block; font-size: 13.5px; font-weight: 600; } .ds-option small { display: block; font-size: 12px; color: var(--muted, #565873); } .ds-option input:focus-visible { outline: 2px solid var(--indigo, #2f3061); outline-offset: 2px; }"
+    },
+    {
+      "name": "Tab Bar",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Fixed bottom bar on indigo; the active tab is a gold pad.",
+      "html": "<nav class=\"ds-tabbar\"><button class=\"ds-tab\"><span class=\"ds-tab-n\">1</span>Input</button><button class=\"ds-tab ds-active\"><span class=\"ds-tab-n\">2</span>Board</button></nav>",
+      "css": ".ds-tabbar { display: flex; background: var(--indigo, #2f3061); border-top: 3px solid var(--copper, #b87333); } .ds-tab { flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 14px 10px; font: 600 15px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; border: 0; border-right: 1px solid var(--indigo-raised, #3d3e78); background: var(--indigo, #2f3061); color: var(--silk-muted, #c9cae6); cursor: pointer; } .ds-tab:last-child { border-right: 0; } .ds-tab:hover { background: var(--indigo-raised, #3d3e78); color: #fff; } .ds-tab:focus-visible { outline: 2px solid var(--gold, #ffe66d); outline-offset: -4px; } .ds-tab.ds-active { color: #fff; box-shadow: inset 0 -4px 0 var(--gold, #ffe66d); } .ds-tab-n { display: grid; place-items: center; width: 20px; height: 20px; font-size: 11px; font-weight: 700; border: 1.5px solid var(--copper, #b87333); } .ds-active .ds-tab-n { background: var(--gold, #ffe66d); color: var(--indigo, #2f3061); border-color: var(--gold, #ffe66d); }"
+    },
+    {
+      "name": "Build Timeline",
+      "kind": "custom",
+      "refersTo": "timeline-pad",
+      "description": "Signature: build steps as pads on a copper trace; done is copper, current is gold.",
+      "html": "<div class=\"ds-tl\"><div class=\"ds-tl-strip\"><button class=\"ds-pad ds-done\"><b>1</b> R1</button><button class=\"ds-pad ds-done\"><b>2</b> C1</button><button class=\"ds-pad ds-now\"><b>3</b> U1</button><button class=\"ds-pad\"><b>4</b> Wire</button></div></div>",
+      "css": ".ds-tl { background: var(--indigo, #2f3061); border-top: 3px solid var(--copper, #b87333); padding: 12px 14px 10px; font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; } .ds-tl-strip { display: flex; gap: 10px; padding: 10px 2px 6px; background: linear-gradient(var(--copper, #b87333), var(--copper, #b87333)) 0 calc(50% + 2px) / 100% 2px no-repeat; } .ds-pad { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font: 12.5px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; white-space: nowrap; border: 1.5px solid var(--copper, #b87333); background: var(--indigo-deep, #23244a); color: var(--silk-muted, #c9cae6); border-radius: 0; cursor: pointer; } .ds-pad b { font-variant-numeric: tabular-nums; } .ds-pad:hover { border-color: var(--gold, #ffe66d); color: #fff; } .ds-pad:focus-visible { outline: 2px solid var(--gold, #ffe66d); outline-offset: 2px; } .ds-pad.ds-done { background: var(--copper-deep, #8a5420); border-color: var(--copper-deep, #8a5420); color: #fff; } .ds-pad.ds-now { background: var(--gold, #ffe66d); border-color: var(--gold, #ffe66d); color: var(--indigo, #2f3061); font-weight: 600; }"
+    },
+    {
+      "name": "Tooltip",
+      "kind": "custom",
+      "refersTo": "tooltip",
+      "description": "Floating part details over the board; the only lifted surface.",
+      "html": "<div class=\"ds-tip\"><div class=\"ds-tip-t\">R3 &middot; 10k&Omega;</div><div class=\"ds-tip-s\">Brown, black, orange, gold</div><table><tr><td>Holes</td><td>E12 to E16</td></tr></table></div>",
+      "css": ".ds-tip { max-width: 340px; background: var(--indigo-deep, #23244a); color: #fff; border-top: 2px solid var(--gold, #ffe66d); padding: 10px 12px; font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; box-shadow: 0 12px 30px rgba(0,0,0,0.3); } .ds-tip-t { font-weight: 700; margin-bottom: 2px; } .ds-tip-s { color: var(--silk-muted, #c9cae6); font-size: 12.5px; margin-bottom: 6px; } .ds-tip table { border-collapse: collapse; font-size: 12px; } .ds-tip td:first-child { color: var(--silk-muted, #c9cae6); padding-right: 12px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Purple Circuit Board",
+    "overview": "The app is a finished circuit board built around the student's work. The shell (header, build timeline, tab bar) is indigo solder mask carrying white silkscreen type; whatever is active or selected is a gold pad; copper is the trace that rules sections off and that the build steps travel along. Inside the shell, work happens on calm, faintly lavender-grey ground with white cards, so the breadboard drawing and the parts lists read without competition.\n\nThe density is a working tool's: compact controls, 13 to 15px text, tight 10 to 18px gaps, everything square. The palette is tinted from the logo's indigo, so neutrals are cool and faintly violet rather than flat grey. It refuses the grey SaaS page with one accent: colour carries meaning (where you are, what is done, what needs attention), not decoration.\n\nTwo drawing surfaces sit inside the world but keep their own palettes: the breadboard renderer draws a realistic white board with red and blue rails, real resistor bands and wire colours, and the schematic canvas uses conventional schematic inks. The world frames them; it never recolours them.",
+    "keyCharacteristics": [
+      "Indigo solder-mask shell, white silkscreen type, copper rule along its edge.",
+      "Gold is a pad: active tab, current build step, selected option, focus on the shell.",
+      "Copper is a trace: section rules, the timeline track, done steps, featured emphasis.",
+      "Light lavender-grey work ground with white, square, thin-bordered cards.",
+      "Square corners everywhere; depth from colour and rules, not shadows."
+    ],
+    "rules": [
+      {
+        "name": "The Gold Pad Rule",
+        "body": "Gold means active or selected, nothing else. If an element is not the current tab, step, choice or focus, it is not gold.",
+        "section": "colors"
+      },
+      {
+        "name": "The Copper Trace Rule",
+        "body": "Featured or emphasised content uses copper, never gold. Copper is structure and emphasis; it is never body text on light ground.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mint Is Retired Rule",
+        "body": "No mint or green tints in the UI chrome. Green exists only as schematic wire ink and in the realistic board.",
+        "section": "colors"
+      },
+      {
+        "name": "The Silkscreen Weight Rule",
+        "body": "On the shell, white is for the current thing and headings; secondary text drops to silk-muted, never to a lower weight or smaller size alone.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Board Rule",
+        "body": "Cards and panels never take drop shadows. Something floats only if it literally floats over the work (the tooltip).",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do put the shell (header, timeline, tab bar) on indigo (#2f3061) with white silkscreen text and a 3px copper rule on its inner edge.",
+      "Do mark the current tab, step, selection and shell focus in gold (#ffe66d), and use gold-soft (#fff4bf) for selection on light ground.",
+      "Do use copper (#b87333) for rules, tracks, outlines and featured emphasis.",
+      "Do keep every corner square and every card border a 1px hairline.",
+      "Do let the breadboard and schematic drawings keep their own realistic colours inside the light work area.",
+      "Do keep secondary text on indigo at silk-muted (#c9cae6) and on light ground at muted (#565873) to hold contrast."
+    ],
+    "donts": [
+      "Don't use gold for anything that is not active or selected; featured and emphasised content is copper.",
+      "Don't reintroduce mint or any green tint into the interface chrome.",
+      "Don't retune the logo indigo or gold.",
+      "Don't round corners on controls, cards or panels.",
+      "Don't add drop shadows to cards or panels; only the floating tooltip lifts.",
+      "Don't use copper as text colour on light ground; it is for non-text structure (copper-deep carries text).",
+      "Don't recolour the breadboard rails, resistor bands or wire colours to match the shell.",
+      "Don't introduce a display typeface until the owner approves the silkscreen font decision."
+    ]
+  }
+}

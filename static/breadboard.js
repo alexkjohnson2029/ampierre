@@ -862,7 +862,8 @@ export const BOARD_CSS = `
   .diode-body.glass { fill: #e9a25a; fill-opacity: 0.85; stroke: #a8642a; }
   .diode-band.glass { fill: #1d1d1f; }
   .cap-disc { fill: #d9a441; stroke: #a87a22; stroke-width: 1; }
-  .cap-film { fill: #c9504b; stroke: #8f3733; stroke-width: 1; }
+  .cap-film { fill: #a53333; stroke: #7a2424; stroke-width: 1; }
+  .cap-film ~ .cap-code { fill: #ffffff; }
   .cap-code { font: 600 9px ui-monospace, Menlo, monospace; fill: #3a2f17; }
   .cap-can { fill: #23262c; stroke: #0f1115; stroke-width: 1; }
   .cap-can-lid { fill: none; stroke: #4b515b; stroke-width: 1.2; }

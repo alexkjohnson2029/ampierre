@@ -104,15 +104,16 @@
           <div class="timeline" id="timeline">
             <div class="tl-head">
               <div class="tl-controls">
-                <button class="ghost" id="tl-prev" title="Previous step" aria-label="Previous step">←</button>
-                <button class="ghost" id="tl-play" title="Play through the build">▶ Play</button>
-                <button class="ghost" id="tl-next" title="Next step" aria-label="Next step">→</button>
+                <button class="ghost" id="tl-prev" title="Previous step" aria-label="Previous step"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button>
+                <button class="ghost" id="tl-play" title="Play through the build"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="fill" d="M5 3l8 5-8 5z"/></svg> Play</button>
+                <button class="ghost" id="tl-next" title="Next step" aria-label="Next step"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button>
                 <button class="ghost" id="tl-all">Show whole board</button>
               </div>
               <div class="tl-right">
                 <label class="tl-mode" title="Show what's still to come, faintly, where it will go">
                   <input type="checkbox" id="tl-ghost" /> Show upcoming parts faintly
                 </label>
+                <span class="tl-count" id="tl-span" aria-hidden="true"></span>
                 <span class="tl-count" id="tl-count"></span>
               </div>
             </div>
