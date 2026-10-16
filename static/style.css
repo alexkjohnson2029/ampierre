@@ -433,18 +433,18 @@ a.primary-link:hover { background: var(--accent-hover); }
 
 .sch-canvas-wrap { position: relative; min-width: 0; }
 .sch-canvas {
-  display: block; width: 100%; height: 600px; background: #fffef9;
-  border: 1px solid var(--area-line); cursor: default; user-select: none; outline: none;
+  display: block; width: 100%; height: 600px; background: var(--mint);
+  border: 1px solid var(--line-strong); cursor: default; user-select: none; outline: none;
 }
-.sch-canvas:focus { border-color: var(--area-ink); }
+.sch-canvas:focus { border-color: var(--accent); }
 .sch-canvas[data-tool="wire"], .sch-canvas[data-tool="place"] { cursor: crosshair; }
 .sch-canvas[data-tool="delete"] { cursor: not-allowed; }
 .sch-status {
   position: absolute; left: 1px; right: 1px; bottom: 1px; padding: 5px 10px;
-  font-size: 12.5px; color: var(--area-muted); background: rgba(251, 250, 247, 0.92);
-  border-top: 1px solid #ddd8cd; pointer-events: none;
+  font-size: 12.5px; color: var(--muted); background: rgba(247, 255, 247, 0.92);
+  border-top: 1px solid var(--line); pointer-events: none;
 }
-.sch-griddot { fill: #c9c2b4; }
+.sch-griddot { fill: #a9c6d2; }
 .sch-part path, .sch-part circle { fill: none; stroke: #1f3c88; stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
 .sch-part path.fill { fill: #1f3c88; }
 .sch-part .hit { fill: transparent; stroke: none; }
