@@ -1,4 +1,5 @@
-"""FastAPI backend.
+"""FastAPI backend — the app run locally. The work itself is in service.py,
+which the GitHub Pages site runs in the browser instead.
 
     POST /api/parse     pasted SPICE (or JSON) netlist  -> netlist + questions
     POST /api/netlist   netlist drawn in the editor     -> netlist + questions
@@ -9,196 +10,60 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 
 from . import packages as pk
-from .models import AMBIGUOUS_KINDS, ComponentKind, Layout, Netlist
-from .placer import place
-from .spice import SpiceError
-from .spice import parse as parse_spice
+from . import service
+from .models import Layout, Netlist
+from .service import (  # noqa: F401 — re-exported for tests and callers
+    CustomPackage,
+    PackageOption,
+    PackageQuestion,
+    ParseResponse,
+    PasteRequest,
+    PlaceRequest,
+    questions_for,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = ROOT / "static"
 EXAMPLES = ROOT / "examples"
 
-
 app = FastAPI(title="AMPierre — schematic to breadboard")
 
 
-# ---------------------------------------------------------------------------
-# Package questions
-# ---------------------------------------------------------------------------
-
-
-class PackageOption(BaseModel):
-    id: str
-    label: str
-    form: str = "dip"
-    pin_count: int = 0
-    pin_map: dict[str, int] = {}
-    pin_names: dict[int, str] = {}
-    marker: str = ""
-    note: str = ""
-    span: int
-
-
-class PackageQuestion(BaseModel):
-    id: str
-    refs: list[str]  # identical parts are asked about once, together
-    kind: str
-    value: str | None = None
-    pins: list[str]
-    options: list[PackageOption]
-    suggested: str
-
-
-def _option(p: pk.Package) -> PackageOption:
-    return PackageOption(
-        id=p.id,
-        label=p.label,
-        form=p.form,
-        pin_count=p.pin_count,
-        pin_map=p.pin_map,
-        pin_names=p.pin_names,
-        marker=p.marker,
-        note=p.note,
-        span=p.span,
-    )
-
-
-def _suggest(comp) -> str:
-    """Guess a package from the value text before asking the user."""
-    value = (comp.value or "").upper().replace("-", "").replace(" ", "")
-    for p in pk.options_for(comp.kind):
-        tokens = [
-            t.strip().upper().replace("-", "")
-            for t in p.label.replace("/", ",").split(",")
-        ]
-        for t in tokens:
-            head = t.split("—")[0].strip()
-            if head and len(head) >= 4 and head in value:
-                return p.id
-    if comp.kind.value == "opamp" and "741" in value:
-        return pk.LM741.id
-    return pk.DEFAULT_FOR_KIND[comp.kind]
-
-
-def questions_for(netlist: Netlist) -> list[PackageQuestion]:
-    """One question per *kind* of part, not per part.
-
-    Four 1N4007s in a bridge are the same question asked four times, so they
-    are grouped: same kind, same value, same set of pins.
-    """
-    groups: dict[tuple, list] = {}
-    for comp in netlist.components:
-        if comp.kind not in AMBIGUOUS_KINDS:
-            continue
-        # A pot wired between the wiper and either end is the same part.
-        pins = () if comp.kind is ComponentKind.POTENTIOMETER else tuple(sorted(comp.pins))
-        key = (comp.kind, comp.value or "", pins)
-        groups.setdefault(key, []).append(comp)
-
-    out: list[PackageQuestion] = []
-    for (kind, _value, _pins), comps in groups.items():
-        first = comps[0]
-        out.append(
-            PackageQuestion(
-                id="+".join(c.ref for c in comps),
-                refs=[c.ref for c in comps],
-                kind=kind.value,
-                value=first.value,
-                pins=list(first.pins.keys()),
-                options=[_option(p) for p in pk.options_for(kind)],
-                suggested=first.package or _suggest(first),
-            )
-        )
-    return out
-
-
-class ParseResponse(BaseModel):
-    netlist: Netlist
-    questions: list[PackageQuestion]
-
-
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
-
-
-class PasteRequest(BaseModel):
-    text: str
+def _http(fn, *args):
+    try:
+        return fn(*args)
+    except service.ServiceError as e:
+        raise HTTPException(e.status, str(e)) from e
 
 
 @app.post("/api/parse", response_model=ParseResponse)
 def parse(req: PasteRequest):
     """A pasted netlist: SPICE as LTspice or PSpice writes it, or JSON."""
-    try:
-        netlist = parse_spice(req.text)
-    except SpiceError as e:
-        raise HTTPException(400, str(e)) from e
-    return ParseResponse(netlist=netlist, questions=questions_for(netlist))
+    return _http(service.from_text, req)
 
 
 @app.post("/api/netlist", response_model=ParseResponse)
 def netlist_route(netlist: Netlist):
     """A netlist drawn in the editor: straight to the part questions."""
-    if not netlist.components:
-        raise HTTPException(400, "The netlist has no components.")
-    return ParseResponse(netlist=netlist, questions=questions_for(netlist))
-
-
-class CustomPackage(BaseModel):
-    """A pinout the user typed in, for a part that isn't in the library."""
-
-    name: str
-    form: str = "dip"
-    pin_count: int | None = None
-    pin_map: dict[str, int] = {}
-    pin_names: dict[str, str] = {}
-    polarized: bool = False
-
-
-class PlaceRequest(BaseModel):
-    netlist: Netlist
-    packages: dict[str, str] = {}  # ref -> package id
-    custom_packages: dict[str, CustomPackage] = {}  # ref -> user-defined pinout
-    #: "flow" = schematic-shaped and roomy, "flow-compact" = schematic-shaped
-    #: and tight, "packed" = fill the board regardless of what it looks like.
-    style: str = "flow"
+    return _http(service.from_netlist, netlist)
 
 
 @app.post("/api/place", response_model=Layout)
 def place_route(req: PlaceRequest):
-    custom = {}
-    for comp in req.netlist.components:
-        spec = req.custom_packages.get(comp.ref)
-        if spec:
-            try:
-                custom[comp.ref] = pk.make_custom(spec.model_dump(), comp.kind)
-            except ValueError as e:
-                raise HTTPException(400, f"{comp.ref}: {e}") from e
-            continue
-        chosen = req.packages.get(comp.ref)
-        if chosen and chosen not in pk.BY_ID:
-            raise HTTPException(400, f"Unknown package '{chosen}' for {comp.ref}")
-        comp.package = chosen or comp.package
-    if not req.netlist.components:
-        raise HTTPException(400, "The netlist has no components.")
-    if req.style not in ("flow", "flow-compact", "packed"):
-        raise HTTPException(400, f"Unknown layout style '{req.style}'")
-    return place(req.netlist, custom, style=req.style)
+    return _http(service.lay_out, req)
 
 
 @app.get("/api/packages")
 def packages_route():
     return {
-        "packages": [_option(p).model_dump() for p in pk.ALL_PACKAGES],
+        "packages": [service.option(p).model_dump() for p in pk.ALL_PACKAGES],
         "custom_forms": pk.CUSTOM_FORMS,
         "by_kind": {
             k.value: [p.id for p in pk.options_for(k)] for k in pk.DEFAULT_FOR_KIND
@@ -209,15 +74,9 @@ def packages_route():
 
 @app.get("/api/examples")
 def examples_route():
-    out = []
-    for f in sorted(EXAMPLES.glob("*.json")):
-        data = json.loads(f.read_text(encoding="utf-8"))
-        entry = {"id": f.stem, "title": data.get("title", f.stem)}
-        if data.get("about"):  # a featured build: who made it and why it's here
-            entry["about"] = data["about"]
-        out.append(entry)
-    # featured builds first
-    return sorted(out, key=lambda e: "about" not in e)
+    return service.examples_index(
+        {f.stem: f.read_text(encoding="utf-8") for f in EXAMPLES.glob("*.json")}
+    )
 
 
 @app.get("/api/examples/{name}", response_model=ParseResponse)
@@ -235,6 +94,7 @@ def index():
 
 
 @app.get("/about")
+@app.get("/about.html")
 def about():
     return FileResponse(STATIC / "about.html")
 

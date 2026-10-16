@@ -305,6 +305,7 @@ different chip, say — is dropped and the automatic layout is used instead.
 | `app/placer.py` | Packed placement, routing, build order — and the fallback when flow can't fit |
 | `app/spice.py` | Reads a pasted SPICE (or JSON) netlist into a `Netlist` |
 | `app/models.py` | Pydantic types shared by all of the above |
+| `app/service.py` | What the routes do, with no web server — used by `main.py` and by the website |
 | `app/main.py` | FastAPI routes |
 | `app/cli.py` | Terminal entry point |
 | `static/breadboard.js` | Layout → SVG, whole or partway through the build. Runs in browser and node |
@@ -312,19 +313,28 @@ different chip, say — is dropped and the automatic layout is used instead.
 | `static/about.html` | About page: purpose, how to learn with it, credits |
 | `static/app.js` | Draw/paste switch, package picker, custom pinouts, timeline, hover, net highlighting |
 | `static/editor.js` | The LTspice-style drawing editor |
+| `static/api.js`, `static/engine.js` | Talks to the local server, or runs the Python in the browser on the website |
+| `tools/build_site.py` | Builds the GitHub Pages site |
 | `static/schematic.js` | Editor symbols, connectivity, drawing → netlist and SPICE |
 | `examples/*.json` | Example netlists, one click away on the Input tab |
 | `tests/` | pytest suite over the SPICE reader, the pinouts, placement and the verifier |
 
-## Putting it online
+## The website
 
-GitHub stores the code. It does **not** run it — this is a Python server, so GitHub Pages
-(static files only) can't host it.
+**https://alexkjohnson2029.github.io/ampierre/** is the same app, hosted on GitHub Pages.
 
-Running it somewhere other than your laptop needs a host that executes Python — Render,
-Railway, Fly.io and Hugging Face Spaces all have free or near-free tiers. The shape is the
-same everywhere: point the host at the repo and set the start command to
-`uvicorn app.main:app --host 0.0.0.0 --port $PORT`. There are no secrets to configure.
+Pages only serves files, so the site has no Python server. Instead the layout engine —
+the same `app/*.py` the local app runs — runs in the browser with
+[Pyodide](https://pyodide.org) (Python compiled to WebAssembly). The first visit downloads
+Python, a few MB the browser then caches; after that it's as quick as the local app, and
+nothing you draw or paste leaves your browser.
+
+- `app/service.py` holds what the API routes do. `app/main.py` serves it over HTTP;
+  `static/engine.js` calls it inside Pyodide. `static/api.js` picks one or the other.
+- `tools/build_site.py _site` builds the site: the pages and scripts, the Python files,
+  the examples, and a `static/site.js` that switches the page to in-browser mode.
+- `.github/workflows/pages.yml` runs the tests, builds the site and publishes it on every
+  push to `main`. A failing test stops the deploy.
 
 ## Known limits
 

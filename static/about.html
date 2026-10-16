@@ -8,11 +8,12 @@
       name="description"
       content="AMPierre helps new engineers learn electrical engineering fundamentals by turning schematics into step-by-step breadboard builds."
     />
-    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="static/style.css" />
+    <script src="static/site.js"></script>
   </head>
   <body class="page-about">
     <header class="top">
-      <a class="brand" href="/">
+      <a class="brand" href="./">
         <div class="mark" aria-hidden="true">A</div>
         <div>
           <h1>AMPierre</h1>
@@ -22,7 +23,7 @@
       <p class="blurb">
         A learning tool for getting from a circuit on paper to a circuit on the bench.
       </p>
-      <a class="ghost" href="/">← Back to the app</a>
+      <a class="ghost" href="./">← Back to the app</a>
     </header>
 
     <main class="about">
@@ -240,9 +241,9 @@
           <li>34 parts</li>
           <li>±4.5 V supply</li>
         </ul>
-        <a class="featured-board" id="featured-board" href="/?example=three_band_equalizer"
+        <a class="featured-board" id="featured-board" href="./?example=three_band_equalizer"
           aria-label="Open the equalizer in AMPierre"></a>
-        <a class="primary-link" href="/?example=three_band_equalizer">Open it in AMPierre →</a>
+        <a class="primary-link" href="./?example=three_band_equalizer">Open it in AMPierre →</a>
       </section>
 
       <section class="credit">
@@ -270,24 +271,26 @@
           AMPierre is a learning tool. Always check pinouts against the part's datasheet, and
           wire with the power off.
         </p>
-        <p>
-          For developers: <a href="/docs" target="_blank" rel="noopener">API reference</a>
+        <p id="dev-links">
+          For developers: <a href="https://github.com/alexkjohnson2029/ampierre" target="_blank" rel="noopener">source on GitHub</a><span id="api-docs"> · <a href="/docs" target="_blank" rel="noopener">API reference</a></span>
         </p>
       </footer>
     </main>
     <script type="module">
       /* A live preview of the featured build: the same board the app draws. */
-      import { renderBoard } from "/static/breadboard.js";
+      import { renderBoard } from "./static/breadboard.js";
+      import { api, isStatic } from "./static/api.js";
+      // The website has no server, so no live API reference to link to.
+      if (isStatic()) document.getElementById("api-docs").hidden = true;
       const host = document.getElementById("featured-board");
       try {
-        const ex = await (await fetch("/api/examples/three_band_equalizer")).json();
-        const res = await fetch("/api/place", {
+        const ex = await api("/api/examples/three_band_equalizer");
+        const layout = await api("/api/place", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ netlist: ex.netlist, style: "flow" }),
         });
-        if (!res.ok) throw new Error(res.statusText);
-        host.innerHTML = renderBoard(await res.json());
+        host.innerHTML = renderBoard(layout);
       } catch {
         host.hidden = true; // the text and the link still say it all
       }

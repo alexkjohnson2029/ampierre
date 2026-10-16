@@ -4,3 +4,4 @@ __pycache__/
 .venv/
 *.svg
 !static/*.svg
+_site/

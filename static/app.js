@@ -2,6 +2,7 @@
 import { renderBoard } from "./breadboard.js";
 import { pinoutDiagram } from "./pinout.js";
 import { mountEditor } from "./editor.js";
+import { api, isStatic } from "./api.js";
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -22,17 +23,9 @@ const CUSTOM = "__custom__";
 const escapeHtml = (s) =>
   String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-async function api(path, options) {
-  const res = await fetch(path, options);
-  if (!res.ok) {
-    let detail = `${res.status} ${res.statusText}`;
-    try {
-      detail = (await res.json()).detail || detail;
-    } catch {}
-    throw new Error(detail);
-  }
-  return res.json();
-}
+/* On the GitHub Pages site the layout engine runs in the browser; start it
+ * loading now so it's ready by the time anyone clicks. */
+if (isStatic()) import("./engine.js").then((e) => e.boot()).catch(() => {});
 
 /* The little spinner bottom-right: it is only ever on while the server is
  * actually doing something, and it says which something. */
