@@ -299,7 +299,7 @@ export function toNetlist(doc) {
     const had = names.get(root);
     if (had && had !== name) {
       const keep = had === "GND" || name === "GND" ? "GND" : [had, name].sort()[0];
-      warnings.push(`Labels "${had}" and "${name}" are wired together — treated as one net, "${keep}".`);
+      warnings.push(`Labels "${had}" and "${name}" are wired together, so they're one net, named "${keep}".`);
       names.set(root, keep);
     } else {
       names.set(root, name);
@@ -362,7 +362,9 @@ export function toNetlist(doc) {
     const sym = SYMBOLS[p.type];
     const ref = (p.ref || "").trim();
     if (!ref) {
-      errors.push(`A ${sym.name.toLowerCase()} has no name — give it one (like ${sym.prefix}1).`);
+      const what = sym.name.replace(/^[A-Z][a-z]/, (s) => s.toLowerCase());
+      const article = /^([aeiou]|LED|NPN|N-)/i.test(what) ? "An" : "A";
+      errors.push(`${article} ${what} has no name. Give it one, like ${sym.prefix}1.`);
       continue;
     }
     if (refs.has(ref)) {
@@ -398,7 +400,7 @@ export function toNetlist(doc) {
     components.push({ ref, kind: sym.kind, value: (p.value || "").trim() || null, pins });
   }
 
-  if (!components.length) errors.push("There's nothing to put on a breadboard yet — add some parts.");
+  if (!components.length) errors.push("There are no parts to put on a breadboard yet. Add at least one.");
   const used = new Set(components.flatMap((c) => Object.values(c.pins)));
   if (components.length && !used.has("GND")) {
     warnings.push("Nothing is connected to ground. Add a ground symbol (press G).");

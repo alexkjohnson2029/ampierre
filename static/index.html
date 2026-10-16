@@ -31,20 +31,21 @@
       <div class="pane" id="pane-input">
         <div class="input-bar">
           <div class="seg input-mode" role="group" aria-label="How to enter the circuit">
-            <button class="ghost seg-btn active" id="mode-draw" data-mode="draw">Draw the schematic</button>
-            <button class="ghost seg-btn" id="mode-paste" data-mode="paste">Paste a netlist</button>
+            <button class="ghost seg-btn active" id="mode-draw" data-mode="draw" aria-pressed="true">Draw the schematic</button>
+            <button class="ghost seg-btn" id="mode-paste" data-mode="paste" aria-pressed="false">Paste a netlist</button>
           </div>
           <div class="examples-row">
             <span class="hint" id="examples-label">or open an example:</span>
             <span id="examples"></span>
           </div>
         </div>
+        <p class="error" id="input-error" role="alert" hidden></p>
 
         <section class="card wide" id="step-draw">
           <h2><span class="step">1</span> Draw the schematic</h2>
           <p class="hint">
-            Draw it as you would in a SPICE program: place parts, wire pin to pin, add ground and
-            name nets with labels. There's no simulation; the drawing becomes the netlist directly.
+            Place parts, wire pin to pin, add a ground and name nets with labels, the way you would
+            in LTspice. Nothing is simulated: the drawing becomes the netlist.
           </p>
           <div id="editor"></div>
         </section>
@@ -54,8 +55,8 @@
           <p class="hint">
             Most SPICE programs can export a netlist. In LTspice, for example, open your schematic
             and choose <strong>View → SPICE Netlist</strong>, then copy everything and paste it here. A PSpice <code>.cir</code> or <code>.net</code> file, or
-            a netlist written by hand, works the same way. Simulation lines (<code>.tran</code>,
-            <code>.model</code>…) are fine; they're skipped.
+            a netlist written by hand, works the same way. Simulation commands such as <code>.tran</code>
+            and <code>.ac</code> are skipped.
           </p>
           <textarea id="spice" rows="12" spellcheck="false" placeholder="* my circuit&#10;V1 VCC 0 9&#10;R1 VCC N001 10k&#10;R2 N001 0 10k&#10;Q1 OUT N001 0 2N3904&#10;R3 VCC OUT 1k&#10;.end"></textarea>
           <div class="row">
@@ -63,20 +64,21 @@
             <button class="ghost" id="spice-file-btn">Open a file</button>
             <input type="file" id="spice-file" accept=".cir,.net,.sp,.spi,.txt,.json" hidden />
           </div>
-          <p class="error" id="parse-error" hidden></p>
+          <p class="error" id="parse-error" role="alert" hidden></p>
         </section>
 
         <section class="card" id="step-parts" hidden>
           <h2><span class="step">2</span> Pick the real parts</h2>
           <p class="hint">
-            A schematic symbol doesn't have a pinout — the package does. Choose what you're
-            actually putting in the board; everything downstream depends on it.
+            A schematic symbol has no pinout; the package does. Choose the part you're actually
+            putting in the board, because the layout depends on it.
           </p>
           <div id="questions"></div>
           <div class="row">
             <button class="primary" id="build">Build the board</button>
             <span class="hint" id="netsummary"></span>
           </div>
+          <p class="error" id="build-error" role="alert" hidden></p>
         </section>
       </div>
 
@@ -87,9 +89,9 @@
             <h2 id="board-title">Breadboard</h2>
             <div class="row tight">
               <span class="seg" role="group" aria-label="Layout style">
-                <button class="ghost seg-btn active" id="style-flow" data-style="flow"
+                <button class="ghost seg-btn active" id="style-flow" data-style="flow" aria-pressed="true"
                   title="Parts spread out, one net per column — easiest to trace">Spacious</button>
-                <button class="ghost seg-btn" id="style-compact" data-style="flow-compact"
+                <button class="ghost seg-btn" id="style-compact" data-style="flow-compact" aria-pressed="false"
                   title="Same shape, packed into fewer columns">Compact</button>
               </span>
               <button class="ghost" id="download">Download SVG</button>
@@ -102,20 +104,20 @@
           <div class="timeline" id="timeline">
             <div class="tl-head">
               <div class="tl-controls">
-                <button class="ghost" id="tl-prev" title="Previous step">←</button>
+                <button class="ghost" id="tl-prev" title="Previous step" aria-label="Previous step">←</button>
                 <button class="ghost" id="tl-play" title="Play through the build">▶ Play</button>
-                <button class="ghost" id="tl-next" title="Next step">→</button>
+                <button class="ghost" id="tl-next" title="Next step" aria-label="Next step">→</button>
                 <button class="ghost" id="tl-all">Show whole board</button>
               </div>
               <div class="tl-right">
                 <label class="tl-mode" title="Show what's still to come, faintly, where it will go">
-                  <input type="checkbox" id="tl-ghost" /> Ghost upcoming parts
+                  <input type="checkbox" id="tl-ghost" /> Show upcoming parts faintly
                 </label>
                 <span class="tl-count" id="tl-count"></span>
               </div>
             </div>
-            <input type="range" id="tl-range" min="0" max="0" value="0" />
-            <div class="tl-now">
+            <input type="range" id="tl-range" min="0" max="0" value="0" aria-label="Build step" />
+            <div class="tl-now" aria-live="polite" aria-atomic="true">
               <p class="tl-text" id="tl-text">Drag the slider, or press Play, to build the board one part at a time.</p>
               <p class="tl-detail" id="tl-detail"></p>
             </div>
@@ -123,10 +125,10 @@
           </div>
 
           <p class="hint legend">
-            Hover anything: rails show their supply, ICs and transistors show their pinout and
-            which way round they go, passives show their value and colour code. Hovering also
-            lights up everything else on the same net — every point the circuit treats as one
-            electrical node.
+            Hover over, tap or Tab to anything on the board. Rails show their supply voltage, chips
+            and transistors show their pinout and which way round they go, and resistors, capacitors
+            and inductors show their value and markings. Everything on the same net lights up too,
+            so you can check each node against the schematic.
           </p>
 
           <div class="panels">
@@ -146,15 +148,15 @@
         </section>
 
         <p class="empty" id="board-empty">
-          No board yet — load a schematic or an example on the Input tab, then press
-          “Build the board”.
+          No board yet. Draw or paste a circuit on the Input tab, or open an example, then press
+          Build the board.
         </p>
       </div>
     </main>
 
     <!-- always-on tab bar, pinned to the bottom of the window -->
     <nav class="tabbar" id="tabbar">
-      <button class="tab active" id="tab-input" data-pane="input">
+      <button class="tab active" id="tab-input" data-pane="input" aria-current="true">
         <span class="tab-n">1</span> Input<span class="tab-sub">schematic &amp; parts</span>
       </button>
       <button class="tab" id="tab-board" data-pane="board" disabled>
@@ -163,7 +165,7 @@
     </nav>
 
     <div id="tooltip" class="tooltip" hidden></div>
-    <div id="busy" class="busy" hidden><span></span><em id="busy-text">working…</em></div>
+    <div id="busy" class="busy" role="status" hidden><span></span><em id="busy-text">working…</em></div>
 
     <script type="module" src="static/app.js"></script>
   </body>

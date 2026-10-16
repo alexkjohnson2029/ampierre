@@ -29,7 +29,6 @@
 
     <main class="about">
       <section class="about-hero">
-        <p class="eyebrow">About</p>
         <h2>From schematic to breadboard, one part at a time.</h2>
         <p class="lead">
           AMPierre helps new engineers learn the fundamentals of electrical engineering at the
@@ -41,7 +40,7 @@
       </section>
 
       <section class="about-story">
-        <h3>Why it exists</h3>
+        <h3>Background</h3>
         <p>
           AMPierre started from teaching students in the lab. As a teaching assistant for
           Electric Circuits, I saw students who could work through a circuit on paper struggle
@@ -50,13 +49,13 @@
           way a part has to face, why a wire has to cross the middle of the board.
         </p>
         <p>
-          I built AMPierre to help young students across that gap. It is the walkthrough I'd
+          I built AMPierre to help students across that gap. It is the walkthrough I'd
           give at the bench, available to anyone, any time they're stuck.
         </p>
       </section>
 
       <section class="about-learn">
-        <h3>What it teaches</h3>
+        <h3>Skills it covers</h3>
         <div class="learn-grid">
           <article class="learn-card learn-wide">
             <div>
@@ -135,17 +134,17 @@
               <text x="262" y="189" class="pr-note">the two halves</text>
 
               <line x1="175" y1="242" x2="256" y2="250" class="pr-lead" />
-              <text x="262" y="246" class="pr-note">A separate strip —</text>
+              <text x="262" y="246" class="pr-note">A separate strip,</text>
               <text x="262" y="260" class="pr-note">not joined to the</text>
               <text x="262" y="274" class="pr-note">one above it</text>
             </svg>
           </article>
 
           <article class="learn-card">
-            <h4>Nets: what “connected” really means</h4>
+            <h4>Nets: what "connected" means</h4>
             <p>
               A net is every point in a circuit that must be the same electrical node. Hover over
-              any part and AMPierre lights up its connected net. That's what you'd check with a
+              or tap any part and AMPierre lights up its net. That's what you'd check with a
               multimeter, and it's how you catch errors, such as a missing jumper or a short.
             </p>
           </article>
@@ -164,8 +163,7 @@
             <p>
               Resistors are drawn with their colour bands, ceramic capacitors with their
               three-digit code, and every chip and transistor comes with a pinout diagram, so
-              you learn to find the right part in the drawer, not only in the drawing. Hover
-              over different components to find their respective pinouts.
+              you learn to find the right part in the drawer, not only in the drawing.
             </p>
           </article>
 
@@ -182,7 +180,7 @@
 
       <section class="about-how">
         <div>
-          <h3>Learning with it</h3>
+          <h3>Tips for learning</h3>
           <ol class="tips">
             <li>
               <strong>Build it yourself.</strong> Use the timeline under the board to place one
@@ -207,7 +205,7 @@
           </ol>
         </div>
         <div>
-          <h3>How it works</h3>
+          <h3>The layout engine</h3>
           <p>
             You draw the schematic or paste its SPICE netlist, which lists which components
             connect to each other. From there, Python algorithms decide where each component
@@ -216,14 +214,13 @@
             students can follow the wiring without getting lost.
           </p>
           <p>
-            The parts are laid out to follow the schematic, with parts hanging from the supply
-            rail, the transistors and chips in the middle and parts
-            standing on the ground rail, then lays every jumper flat along a row or straight
-            down a column so none of them overlap. The rare jumper that has to go corner to
-            corner is drawn arched, hopping over the board like a real flexible wire. It
-            shows where the bench supply and the wave generator clip on, and it checks every
-            connection before showing you anything, so the board you see is electrically the
-            circuit you drew.
+            The parts are laid out to follow the schematic: parts that hang from the supply rail,
+            transistors and chips in the middle, and parts that stand on the ground rail. Every
+            jumper then runs flat along a row or straight down a column, so none of them overlap.
+            The rare jumper that has to go corner to corner is drawn arched, the way a real
+            flexible wire hops over the board. AMPierre also shows where the bench supply and
+            the wave generator clip on, and it checks every connection before showing you
+            anything, so the board you see is electrically the circuit you drew.
           </p>
           <p>
             AMPierre isn't a simulator. It shows you how to <em>build</em> a circuit, not
@@ -234,8 +231,7 @@
       </section>
 
       <section class="featured">
-        <p class="eyebrow">Featured build</p>
-        <h3>AJ's three-band audio equalizer</h3>
+        <h3>Featured build: AJ's three-band audio equalizer</h3>
         <p>
           One of my own projects, and the biggest circuit that ships with AMPierre. I designed
           and simulated it in LTspice, then built it on a breadboard. An input amp feeds three
@@ -262,16 +258,15 @@
       <section class="credit">
         <div class="credit-mark" aria-hidden="true">AJ</div>
         <div class="credit-body">
-          <p class="eyebrow">Created by</p>
-          <h3>Alexander Kim Johnson</h3>
+          <h3>Made by Alexander Kim Johnson</h3>
           <p>
             Electrical engineering student at Rensselaer Polytechnic Institute and teaching
             assistant for Electric Circuits. I built AMPierre for the students I work with in
             lab, and for anyone learning to build circuits for the first time.
           </p>
           <p>
-            I have a strong interest in leveraging AI tools and emerging technologies to boost
-            productivity, streamline workflows, and support better decision-making.
+            I'm interested in how AI tools and new technology can help people work faster and
+            make better decisions.
           </p>
           <a
             class="primary-link"
