@@ -8,13 +8,14 @@
       name="description"
       content="AMPierre helps new engineers learn electrical engineering fundamentals by turning schematics into step-by-step breadboard builds."
     />
+    <link rel="icon" type="image/svg+xml" href="static/icon.svg" />
     <link rel="stylesheet" href="static/style.css" />
     <script src="static/site.js"></script>
   </head>
   <body class="page-about">
     <header class="top">
       <a class="brand" href="./">
-        <div class="mark" aria-hidden="true">A</div>
+        <img class="mark" src="static/icon.svg" alt="" width="42" height="42" />
         <div>
           <h1>AMPierre</h1>
           <p class="tagline">Schematic in, breadboard out.</p>
@@ -34,7 +35,7 @@
           AMPierre helps new engineers learn the fundamentals of electrical engineering at the
           point where they most often get stuck: turning a circuit drawn on paper into a
           circuit wired on a breadboard. Give it a schematic and it shows you where every part
-          goes, which way round it faces, and every wire you'll need, then walks you through
+          goes, which way round each component faces, and every wire you'll need, then walks you through
           the build one step at a time.
         </p>
       </section>
@@ -42,9 +43,9 @@
       <section class="about-story">
         <h3>Why it exists</h3>
         <p>
-          AMPierre started in the lab. As a teaching assistant for Electric Circuits, I saw
-          students who could work through a circuit on paper struggle to turn it into
-          breadboard wiring. Analysing a circuit and building one are two different skills,
+          AMPierre started from teaching students in the lab. As a teaching assistant for
+          Electric Circuits, I saw students who could work through a circuit on paper struggle
+          to wire it onto a breadboard. Analysing a circuit and building one are two different skills,
           and the second is rarely taught head-on: which holes are connected underneath, which
           way a part has to face, why a wire has to cross the middle of the board.
         </p>
@@ -64,7 +65,7 @@
                 Every hole belongs to a hidden strip of metal. Five holes in a column form one
                 strip; the channel down the middle splits the board into two halves that are
                 <em>not</em> connected; the rails along the edges run the full length of the
-                board and carry power and ground. Once that picture clicks, every layout makes
+                board and carry power and ground. Once that picture clicks, layouts start to make
                 sense.
               </p>
             </div>
@@ -143,14 +144,14 @@
           <article class="learn-card">
             <h4>Nets: what “connected” really means</h4>
             <p>
-              A net is every point in a circuit that must be the same electrical node. Hover any
-              part and AMPierre lights up everything else on its net. That is exactly what you'd
-              check with a multimeter, and it's how you catch a missing jumper or a short.
+              A net is every point in a circuit that must be the same electrical node. Hover over
+              any part and AMPierre lights up its connected net. That's what you'd check with a
+              multimeter, and it's how you catch errors, such as a missing jumper or a short.
             </p>
           </article>
 
           <article class="learn-card">
-            <h4>Which way round</h4>
+            <h4>Component orientation</h4>
             <p>
               Diodes have a cathode band, electrolytic capacitors a stripe, LEDs a flat edge,
               ICs a notch beside pin&nbsp;1, and transistors a flat face. Polarised parts are
@@ -163,16 +164,17 @@
             <p>
               Resistors are drawn with their colour bands, ceramic capacitors with their
               three-digit code, and every chip and transistor comes with a pinout diagram, so
-              you learn to find the right part in the drawer, not only in the drawing.
+              you learn to find the right part in the drawer, not only in the drawing. Hover
+              over different components to find their respective pinouts.
             </p>
           </article>
 
           <article class="learn-card">
-            <h4>Building with a method</h4>
+            <h4>Building order</h4>
             <p>
-              Power off. Chips and transistors first, then the parts around them, then the
-              wires, and the supply last. Check continuity before you switch on. The build
-              timeline follows that order, one step at a time.
+              Start with the power off. Place the chips and transistors first, then the other
+              components, then the wires, and connect the supply last. Make sure continuity is
+              right before you switch on. The timeline follows that order, one step at a time.
             </p>
           </article>
         </div>
@@ -207,9 +209,15 @@
         <div>
           <h3>How it works</h3>
           <p>
-            You draw the schematic or paste its SPICE netlist, which says exactly what connects
-            to what. From there it is ordinary code: it lays the parts out to follow the schematic, with parts
-            hanging from the supply rail, the transistors and chips in the middle and parts
+            You draw the schematic or paste its SPICE netlist, which lists which components
+            connect to each other. From there, Python algorithms decide where each component
+            goes. No AI is used in the breadboard wiring itself, though the algorithm was
+            developed with the help of AI. It is tuned for clean, easy-to-read layouts, so
+            students can follow the wiring without getting lost.
+          </p>
+          <p>
+            The parts are laid out to follow the schematic, with parts hanging from the supply
+            rail, the transistors and chips in the middle and parts
             standing on the ground rail, then lays every jumper flat along a row or straight
             down a column so none of them overlap. The rare jumper that has to go corner to
             corner is drawn arched, hopping over the board like a real flexible wire. It
@@ -219,7 +227,8 @@
           </p>
           <p>
             AMPierre isn't a simulator. It shows you how to <em>build</em> a circuit, not
-            whether the circuit does what you want.
+            whether the circuit works. If your circuit doesn't work, the problem may not be the
+            layout.
           </p>
         </div>
       </section>
@@ -234,6 +243,10 @@
           filters from loading each other, a summing amplifier mixes the bands back together,
           and a peak detector and comparator light an LED when the output gets close to
           clipping.
+        </p>
+        <p>
+          When I was starting out as an electrical engineering student, I wished I had a tool
+          like this to help with my breadboard builds.
         </p>
         <ul class="project-facts">
           <li>8 op-amps in two OP484s</li>
@@ -255,6 +268,10 @@
             Electrical engineering student at Rensselaer Polytechnic Institute and teaching
             assistant for Electric Circuits. I built AMPierre for the students I work with in
             lab, and for anyone learning to build circuits for the first time.
+          </p>
+          <p>
+            I have a strong interest in leveraging AI tools and emerging technologies to boost
+            productivity, streamline workflows, and support better decision-making.
           </p>
           <a
             class="primary-link"

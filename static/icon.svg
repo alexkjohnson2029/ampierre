@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- A resistor symbol whose leads drop into a row of breadboard holes. -->
+  <rect width="64" height="64" fill="#b4552d"/>
+  <g fill="none" stroke="#fff" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M12 44 V22 H18 L21 15 L27 29 L33 15 L39 29 L45 15 L48 22 H52 V44"/>
+  </g>
+  <g fill="#fff">
+    <rect x="9" y="44" width="6" height="6"/>
+    <rect x="49" y="44" width="6" height="6"/>
+  </g>
+  <g fill="#fff" fill-opacity="0.45">
+    <rect x="19" y="46" width="4" height="4"/>
+    <rect x="27" y="46" width="4" height="4"/>
+    <rect x="35" y="46" width="4" height="4"/>
+    <rect x="43" y="46" width="4" height="4"/>
+  </g>
+</svg>

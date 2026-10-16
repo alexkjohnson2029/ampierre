@@ -4,23 +4,24 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AMPierre — schematic to breadboard</title>
+    <link rel="icon" type="image/svg+xml" href="static/icon.svg" />
     <link rel="stylesheet" href="static/style.css" />
     <script src="static/site.js"></script>
   </head>
   <body>
     <header class="top">
       <div class="brand">
-        <div class="mark" aria-hidden="true">A</div>
+        <img class="mark" src="static/icon.svg" alt="" width="42" height="42" />
         <div>
           <h1>AMPierre</h1>
           <p class="tagline">Schematic in, breadboard out.</p>
         </div>
       </div>
       <p class="blurb">
-        Draw a schematic the way you would in LTspice, or paste the netlist LTspice or PSpice
-        gives you. It works out where every part sits on a real 830-point board — which holes,
-        which way round, and every jumper you have to cut — and walks you through building it
-        one step at a time.
+        Draw a schematic as you would in a SPICE program, or paste the netlist it exports.
+        AMPierre works out where every part sits on a virtual 830-point board (which holes,
+        which way each part faces, and every jumper you need to cut) and walks you through
+        building it one step at a time.
       </p>
       <a class="ghost" href="about.html">About</a>
     </header>
@@ -42,8 +43,8 @@
         <section class="card wide" id="step-draw">
           <h2><span class="step">1</span> Draw the schematic</h2>
           <p class="hint">
-            Draw it the way you would in LTspice: place parts, wire pin to pin, add ground and
-            name nets with labels. No simulation. The drawing becomes the netlist directly.
+            Draw it as you would in a SPICE program: place parts, wire pin to pin, add ground and
+            name nets with labels. There's no simulation; the drawing becomes the netlist directly.
           </p>
           <div id="editor"></div>
         </section>
@@ -51,8 +52,8 @@
         <section class="card" id="step-input" hidden>
           <h2><span class="step">1</span> Paste a netlist</h2>
           <p class="hint">
-            In LTspice, open your schematic and choose <strong>View → SPICE Netlist</strong>, then
-            copy everything and paste it here. A PSpice <code>.cir</code> or <code>.net</code> file, or
+            Most SPICE programs can export a netlist. In LTspice, for example, open your schematic
+            and choose <strong>View → SPICE Netlist</strong>, then copy everything and paste it here. A PSpice <code>.cir</code> or <code>.net</code> file, or
             a netlist written by hand, works the same way. Simulation lines (<code>.tran</code>,
             <code>.model</code>…) are fine; they're skipped.
           </p>

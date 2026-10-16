@@ -688,7 +688,9 @@ for (const id of ["style-flow", "style-compact"]) {
   };
 }
 
-$("restart").onclick = () => location.reload();
+// Drop any ?example=… so a featured build opened from the About page doesn't
+// load itself straight back onto the board.
+$("restart").onclick = () => location.assign(location.pathname);
 
 showPane("input");
 

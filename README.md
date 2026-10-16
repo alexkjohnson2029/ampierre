@@ -2,9 +2,9 @@
 
 **Schematic in, breadboard out.**
 
-Draw a schematic on the site the way you would in LTspice, or paste the SPICE netlist
-LTspice or PSpice gives you, and get back a top-down breadboard layout: where every part
-goes, which way round it faces, and every jumper you have to cut.
+Draw a schematic on the site as you would in a SPICE program, or paste the netlist that
+LTspice, PSpice or another SPICE program exports, and get back a top-down breadboard
+layout: where every part goes, which way round it faces, and every jumper you have to cut.
 
 The page has two tabs, pinned to the bottom of the window: **Input** (draw or paste the
 circuit, pick the real parts) and **Board** (the layout, the build timeline, the parts

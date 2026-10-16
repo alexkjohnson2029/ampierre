@@ -13,7 +13,9 @@ from app.models import Netlist
 from app import quality
 from app.placer import place
 
-EXAMPLES = sorted((Path(__file__).resolve().parent.parent / "examples").glob("*.json"))
+HERE = Path(__file__).resolve().parent
+# The shipped examples, plus circuits kept only for testing (not shown on the site).
+EXAMPLES = sorted([*(HERE.parent / "examples").glob("*.json"), *(HERE / "fixtures").glob("*.json")])
 STYLES = ("flow", "flow-compact")
 
 

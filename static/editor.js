@@ -670,7 +670,7 @@ export function mountEditor(root, { onUse }) {
           <dt>Ctrl+Z / Y</dt><dd>undo / redo</dd>
           <dt>Esc</dt><dd>back to select</dd>
         </dl>
-        <p class="hint">Labels with the same name are the same net, as in LTspice. Name the supply
+        <p class="hint">Labels with the same name are the same net, as in SPICE programs. Name the supply
         nets V+ and V- (or wire a DC supply to them) so they go on the rails.</p>`;
       return;
     }
