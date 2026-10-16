@@ -120,7 +120,7 @@ saved from this app. `app/spice.py` reads it with no guessing where the netlist 
 The first example, marked **AJ's build**, is the three-band audio equalizer AMPierre's
 creator designed in LTspice and built on a breadboard: an input amp, bass/mid/treble
 filters with a trimmer each, three buffers, a summing amp and a clip LED — eight op-amps
-in two OP484s, 34 parts. `/?example=three_band_equalizer` opens it straight on the board,
+in two OP484s, 38 parts. `/?example=three_band_equalizer` opens it straight on the board,
 and the About page shows it with a live preview.
 
 Its board was laid out by hand (`layout` in the example's JSON) and comes out with no
@@ -208,8 +208,7 @@ The engine is `app/flow.py`:
    other stay together; loose nets drift towards whatever they connect to. A circuit
    with no transistor or chip is arranged around its busiest net. Then each block is
    tried in every other position, keeping any move that shortens the total wiring.
-4. **Hand out columns** with a fixed gap between blocks — 5 in **Spacious**, 3 in
-   **Compact** — nudging a block over a column or two so its strips line up with real rail
+4. **Hand out columns** with a fixed gap of 5 between blocks, nudging a block over a column or two so its strips line up with real rail
    holes (the rails skip one every sixth column).
 5. **Plug parts into the rails.** A part with one end on supply or ground stands upright
    between the rail and the strip of its other net — a pull-up from the top + rail, a
@@ -241,19 +240,15 @@ wrong board, only a less pretty one. A jumper that can't lie flat goes corner to
 and is drawn **arched**, on top of the parts with a shadow, the way a flexible jumper wire
 hops over the board.
 
-Across the five examples in both modes, this took the board from 70 jumpers (19 of them
+Across the five examples, this took the board from 70 jumpers (19 of them
 diagonal, 23 running over a part) to 50 (3 diagonal, none over a part). The remaining
 diagonals are real squeezes — seven parts meeting at a transistor's three legs fill every
 hole in its strips.
 
-**Spacious vs Compact** (toggle above the board): same shape, different gap between net
-columns. Spacious leaves room to see every lead and trace a node by eye; Compact uses
-fewer columns and gets more circuit in view. Compact also keeps a circuit with no IC
-entirely **above the channel**, unless that would make the wiring worse (diagonals,
-crossings or wires over parts the two-half layout doesn't need) — then it uses both
-halves. Op-amp circuits always use both, since the chip straddles
-the channel. From the terminal: `--style flow`, `--style flow-compact`, or
-`--style packed`.
+There is one layout style on the site. (A Compact mode used to squeeze the net columns
+closer together; it came out the same as the normal layout on small circuits, messier on
+big ones, and could cram a diode or capacitor into a gap too short for its body, so it
+was removed.) From the terminal: `--style flow` (the default) or `--style packed`.
 
 Board conventions that hold in every mode:
 

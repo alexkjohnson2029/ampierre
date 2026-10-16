@@ -135,7 +135,15 @@ class HandPlacer(FlowPlacer):
         a, b = holes[names[0]], holes[names[1]]
         on_rail = [bb.is_rail(h.row) for h in (a, b)]
         if all(on_rail):
-            raise PlanError(f"{comp.ref}: rail-to-rail parts aren't supported in a hand layout")
+            # Straight across two neighbouring rails: decoupling beside a chip.
+            if a.col != b.col:
+                raise PlanError(f"{comp.ref}: a part across the rails stands in one column")
+            if not self._try_rail_to_rail(comp, pkg, names, nets, at=a.col):
+                raise PlanError(f"{comp.ref}: can't go across the rails at column {a.col}")
+            placed = {p.name: p.hole for p in self.placed[-1].pins}
+            if placed != holes:
+                raise PlanError(f"{comp.ref}: its nets aren't on the rails at {a.key()} and {b.key()}")
+            return
         if any(on_rail):
             ri = on_rail.index(True)
             rail_hole, strip_hole = (a, b) if ri == 0 else (b, a)

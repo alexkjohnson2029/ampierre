@@ -42,6 +42,9 @@ def test_the_netlist_matches_the_schematic():
     expected = {f"R{i}" for i in (1, 2, 5, 6, 7, 8, 11, 12, 15, 16, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28)}
     expected |= {f"C{i}" for i in range(1, 7)} | {"D2", "D5", "IC1", "IC2"}
     expected |= {"RV1", "RV2", "RV3", "RV4"}
+    # plus what a real board needs and the simulation doesn't: a 100 nF
+    # decoupling cap on each supply pin of each chip
+    expected |= {"C7", "C8", "C9", "C10"}
     assert refs == expected
     for gone in ("R3", "R4", "R9", "R10", "R13", "R14", "R17", "R18", "D1", "D3", "D4"):
         assert gone not in refs
@@ -115,9 +118,8 @@ def test_pots_are_asked_about_like_other_parts_with_choices():
 # --- the hand-arranged board -------------------------------------------------
 
 
-@pytest.mark.parametrize("style", ["flow", "flow-compact"])
-def test_the_example_uses_its_hand_layout_and_it_is_spotless(style):
-    layout = place(_eq(), style=style)
+def test_the_example_uses_its_hand_layout_and_it_is_spotless():
+    layout = place(_eq())
     assert any("Laid out by hand" in n for n in layout.notes)
     assert layout.warnings == []
     assert bb.verify(layout) == []

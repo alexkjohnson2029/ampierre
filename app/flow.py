@@ -23,9 +23,8 @@ connections lean towards (input, then E-B-C, then output). A part with one end
 on supply or ground plugs straight into that rail instead of needing a strip
 and a jumper; every other part spans the two columns its nets live in.
 
-Two spacings. Compact puts the net columns three apart and keeps a simple
-circuit above the channel; Spacious puts them five apart so every lead can be
-traced by eye.
+Net columns sit five apart so every lead can be traced by eye; a circuit
+too big for that is tried with its columns closer together before giving up.
 
 Correctness is unchanged: this only chooses *where*. The same verifier runs
 afterwards, and if a circuit can't be laid out this way the caller falls back
@@ -40,7 +39,7 @@ from . import breadboard as bb
 from . import packages as pk
 from . import values as val
 from .models import Component, Hole, NetRole, PlacedComponent, PlacedPin
-from .placer import THREE_LEAD, Placer
+from .placer import AXIAL_FLAT_GAP, THREE_LEAD, Placer
 
 #: Rows a part may use, nearest the channel first. Hubs (transistors, ICs) take
 #: the inner rows; two-lead parts stack outward from there.
@@ -48,12 +47,6 @@ TOP_HUB_ROW = "G"
 TOP_PART_ROWS = ("H", "I", "J")
 BOTTOM_HUB_ROW = "D"
 BOTTOM_PART_ROWS = ("C", "B", "A")
-
-#: Compact mode keeps a circuit with no IC entirely above the channel. The
-#: transistor goes in the outermost row so all four rows under it are free for
-#: parts that run across its legs' columns.
-TOP_ONLY_HUB_ROW = "J"
-TOP_ONLY_PART_ROWS = ("I", "H", "G", "F")
 
 #: How far a part plugged into a rail stands, in hole pitches: about the
 #: length of a quarter-watt resistor with its leads bent down, and enough body
@@ -83,7 +76,6 @@ class FlowPlacer(Placer):
         netlist,
         custom=None,
         spacing: int = 4,
-        top_only: bool = False,
         skip_homes: set[str] | None = None,
         dodge_gaps: bool = True,
         rail_mount: bool | str = True,
@@ -99,11 +91,6 @@ class FlowPlacer(Placer):
         #: straight into the rail (worked out by a first pass — see place())
         self.skip_homes = skip_homes or set()
         self.step = spacing + 1  # columns between one net's strip and the next
-        # An IC straddles the channel whatever happens, so "top half only" is
-        # only on offer for circuits without one.
-        self.top_only = top_only and not any(
-            self.package_for(c).straddles_channel for c in netlist.components
-        )
         #: net name -> the strip that net "lives" in
         self.home: dict[str, tuple[str, int]] = {}
         self.rank: dict[str, int] = {}
@@ -496,7 +483,7 @@ class FlowPlacer(Placer):
         # circuit, leaving the supply column clear for its rail wire.
         self.rail_part_from = self.cursor
 
-        hub_row = TOP_ONLY_HUB_ROW if self.top_only else TOP_HUB_ROW
+        hub_row = TOP_HUB_ROW
         for hub, start in hubs:
             pkg = self.package_for(hub)
             if pkg.straddles_channel:
@@ -575,10 +562,7 @@ class FlowPlacer(Placer):
             for half in ("top", "bottom")
         }
         rows = {"top": TOP_PART_ROWS, "bottom": BOTTOM_PART_ROWS}
-        if self.top_only:
-            # Everything above the channel; the lower half only if it runs out.
-            halves = (("top", TOP_ONLY_PART_ROWS), ("bottom", BOTTOM_PART_ROWS))
-        elif votes["top"] != votes["bottom"]:
+        if votes["top"] != votes["bottom"]:
             side = "top" if votes["top"] > votes["bottom"] else "bottom"
             other = "bottom" if side == "top" else "top"
             halves = ((side, rows[side]), (other, rows[other]))
@@ -588,12 +572,9 @@ class FlowPlacer(Placer):
             halves = (("bottom", BOTTOM_PART_ROWS), ("top", TOP_PART_ROWS))
 
         def attempt(half, rows) -> bool:
-            if half == "top":
-                hub_row = TOP_ONLY_HUB_ROW if self.top_only else TOP_HUB_ROW
-            else:
-                hub_row = BOTTOM_HUB_ROW
+            hub_row = TOP_HUB_ROW if half == "top" else BOTTOM_HUB_ROW
             allowed = rows + (hub_row,)
-            for cols in self._column_candidates(home):
+            for cols in self._lead_columns(home, pkg):
                 if not all(self.strip_ok_for(half, c, n) for c, n in zip(cols, nets)):
                     continue
                 footprint = list(range(min(cols) - 1, max(cols) + 2))
@@ -649,7 +630,7 @@ class FlowPlacer(Placer):
         ri = rail_ends[0]
         rail_net, x_net = nets[ri], nets[1 - ri]
         role = self.role(rail_net)
-        if self.top_only or role is NetRole.SUPPLY_POS:
+        if role is NetRole.SUPPLY_POS:
             halves = ("top",)
         elif role is NetRole.SUPPLY_NEG:
             halves = ("bottom",)
@@ -757,7 +738,24 @@ class FlowPlacer(Placer):
             if key not in self.board.occupied:
                 self.board.occupied[key] = owner
 
-    def _column_candidates(self, home: list[int]):
+    def _lead_columns(self, home: list[int], pkg: pk.Package):
+        """Column pairs for a two-lead part, flat-lying ones first.
+
+        An axial body (a quarter-watt resistor, a diode) is about 6 mm long,
+        so lying flat its leads must be at least three holes apart. Closer
+        than that it still fits standing on end, one lead bent back down
+        beside the body — the usual way to fit a resistor between neighbouring
+        strips — so those positions are kept, but only as a last resort.
+        """
+        if pkg.form != "axial":
+            yield from self._column_candidates(home)
+            return
+        yield from self._column_candidates(home, AXIAL_FLAT_GAP)
+        for cols in self._column_candidates(home):
+            if abs(cols[0] - cols[1]) < AXIAL_FLAT_GAP:
+                yield cols
+
+    def _column_candidates(self, home: list[int], gap: int = 1):
         """Where this part's two leads could go, best first.
 
         Straight into both nets' own columns if that fits. Otherwise either end
@@ -770,6 +768,8 @@ class FlowPlacer(Placer):
 
         def offer(a: int, b: int):
             if a == b or (a, b) in seen:
+                return None
+            if abs(a - b) < gap:
                 return None
             if not (1 <= a <= self.board.columns and 1 <= b <= self.board.columns):
                 return None

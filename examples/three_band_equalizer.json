@@ -7,7 +7,7 @@
     "facts": [
       "8 op-amps in two OP484s",
       "4 trimmer pots",
-      "34 parts",
+      "38 parts",
       "±4.5 V supply"
     ],
     "link": {
@@ -401,7 +401,51 @@
         "A": "LEDA",
         "K": "GND"
       },
-      "notes": "Lights when the output's peaks pass about 4 V — the output is close to clipping on the 4.5 V rail."
+      "notes": "Lights when the output's peaks pass about 4 V — the output is close to clipping on the 4.5 V rail. When it's off, the comparator's output sits near −4.5 V and the LED is reverse-biased by about 4.4 V. That's inside the 5 V most 5 mm LEDs are rated for; on a bigger supply you'd add a 1N4148 in series."
+    },
+    {
+      "ref": "C7",
+      "kind": "capacitor",
+      "value": "100n",
+      "package": "radial_ceramic",
+      "pins": {
+        "1": "V+",
+        "2": "GND"
+      },
+      "notes": "Supply decoupling for IC1's V+ pin, straight across the rails beside the chip. Not on the LTspice schematic (the simulator's supplies are perfect); on a breadboard, without it the long rail wires can make the op-amps ring or oscillate."
+    },
+    {
+      "ref": "C8",
+      "kind": "capacitor",
+      "value": "100n",
+      "package": "radial_ceramic",
+      "pins": {
+        "1": "V-",
+        "2": "GND"
+      },
+      "notes": "Supply decoupling for IC1's V− pin, straight across the rails beside the chip. Not on the LTspice schematic (the simulator's supplies are perfect); on a breadboard, without it the long rail wires can make the op-amps ring or oscillate."
+    },
+    {
+      "ref": "C9",
+      "kind": "capacitor",
+      "value": "100n",
+      "package": "radial_ceramic",
+      "pins": {
+        "1": "V+",
+        "2": "GND"
+      },
+      "notes": "Supply decoupling for IC2's V+ pin, straight across the rails beside the chip. Not on the LTspice schematic (the simulator's supplies are perfect); on a breadboard, without it the long rail wires can make the op-amps ring or oscillate."
+    },
+    {
+      "ref": "C10",
+      "kind": "capacitor",
+      "value": "100n",
+      "package": "radial_ceramic",
+      "pins": {
+        "1": "V-",
+        "2": "GND"
+      },
+      "notes": "Supply decoupling for IC2's V− pin, straight across the rails beside the chip. Not on the LTspice schematic (the simulator's supplies are perfect); on a breadboard, without it the long rail wires can make the op-amps ring or oscillate."
     }
   ],
   "sources": [
@@ -437,7 +481,7 @@
     "V6 (AC 1) isn't connected to anything on the schematic — it's left over from an AC sweep — so it isn't built."
   ],
   "layout": {
-    "note": "Laid out by hand: each band's filter sits beside its buffer, the three 100 kΩ summing resistors meet at one strip, and every jumper runs straight along a row or down a column. The app still checked every hole, added the supply drops and proved the board matches the circuit. Compact and Spacious show this same board.",
+    "note": "Laid out by hand: each band's filter sits beside its buffer, the three 100 kΩ summing resistors meet at one strip, and every jumper runs straight along a row or down a column. The app still checked every hole, added the supply drops and proved the board matches the circuit.",
     "parts": {
       "IC1": {
         "col": 21,
@@ -570,6 +614,22 @@
       "D5": {
         "A": "A60",
         "K": "B-60"
+      },
+      "C7": {
+        "1": "T+26",
+        "2": "T-26"
+      },
+      "C8": {
+        "1": "B+26",
+        "2": "B-26"
+      },
+      "C9": {
+        "1": "T+54",
+        "2": "T-54"
+      },
+      "C10": {
+        "1": "B+54",
+        "2": "B-54"
       }
     },
     "wires": [

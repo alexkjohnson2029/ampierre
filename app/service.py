@@ -110,7 +110,9 @@ def questions_for(netlist: Netlist) -> list[PackageQuestion]:
                 value=first.value,
                 pins=list(first.pins.keys()),
                 options=[option(p) for p in pk.options_for(kind)],
-                suggested=first.package or _suggest(first),
+                suggested=first.package
+                if first.package in pk.BY_ID and pk.fits(pk.BY_ID[first.package], kind)
+                else _suggest(first),
             )
         )
     return out
@@ -145,8 +147,8 @@ class PlaceRequest(BaseModel):
     netlist: Netlist
     packages: dict[str, str] = {}  # ref -> package id
     custom_packages: dict[str, CustomPackage] = {}  # ref -> user-defined pinout
-    #: "flow" = schematic-shaped and roomy, "flow-compact" = schematic-shaped
-    #: and tight, "packed" = fill the board regardless of what it looks like.
+    #: "flow" = schematic-shaped, "packed" = fill the board regardless of
+    #: what it looks like.
     style: str = "flow"
 
 
@@ -166,6 +168,24 @@ def from_netlist(netlist: Netlist) -> ParseResponse:
     return ParseResponse(netlist=netlist, questions=questions_for(netlist))
 
 
+_A_KIND = {
+    ComponentKind.OPAMP: "an op-amp",
+    ComponentKind.IC: "a chip",
+    ComponentKind.NPN: "an NPN transistor",
+    ComponentKind.PNP: "a PNP transistor",
+    ComponentKind.NMOS: "an N-channel MOSFET",
+    ComponentKind.PMOS: "a P-channel MOSFET",
+    ComponentKind.REGULATOR: "a regulator",
+    ComponentKind.DIODE: "a diode",
+    ComponentKind.LED: "an LED",
+    ComponentKind.POTENTIOMETER: "a potentiometer",
+    ComponentKind.RESISTOR: "a resistor",
+    ComponentKind.CAPACITOR: "a capacitor",
+    ComponentKind.POLARIZED_CAPACITOR: "a polarised capacitor",
+    ComponentKind.INDUCTOR: "an inductor",
+}
+
+
 def lay_out(req: PlaceRequest) -> Layout:
     custom = {}
     for comp in req.netlist.components:
@@ -179,12 +199,35 @@ def lay_out(req: PlaceRequest) -> Layout:
         chosen = req.packages.get(comp.ref)
         if chosen and chosen not in pk.BY_ID:
             raise ServiceError(f"Unknown package '{chosen}' for {comp.ref}")
+        if chosen and not pk.fits(pk.BY_ID[chosen], comp.kind):
+            raise ServiceError(
+                f"{comp.ref} is {_A_KIND.get(comp.kind, 'that kind of part')}, and "
+                f"{pk.BY_ID[chosen].label} can't hold one. Pick another package."
+            )
         comp.package = chosen or comp.package
     if not req.netlist.components:
         raise ServiceError("The netlist has no components.")
-    if req.style not in ("flow", "flow-compact", "packed"):
+    for comp in req.netlist.components:
+        _check_pins_fit(comp, custom.get(comp.ref) or pk.get(comp.package, comp.kind))
+    if req.style not in ("flow", "packed"):
         raise ServiceError(f"Unknown layout style '{req.style}'")
     return place(req.netlist, custom, style=req.style)
+
+
+def _check_pins_fit(comp, pkg: pk.Package) -> None:
+    """Every pin the schematic uses must exist on the package picked for it.
+
+    Otherwise the part goes on the board with nothing wired to it, which looks
+    like a layout bug and is really a wrong pick: say so before placing.
+    """
+    if pkg.pin_count <= 2 and not pkg.pin_map:
+        return  # two-lead parts map their pins by position
+    missing = [name for name in comp.pins if pk.resolve_pin(pkg, name) is None]
+    if missing:
+        raise ServiceError(
+            f"{comp.ref}: {pkg.label} has no pin called {', '.join(missing)}. "
+            "Pick a package that does, or choose My own part and give each pin's number."
+        )
 
 
 def examples_index(files: dict[str, str]) -> list[dict]:

@@ -439,7 +439,28 @@ function twoLead(comp) {
   const bw = Math.max(24, Math.abs(x2 - x1) - 16);
   let body;
   let labelled = false;
-  if (comp.kind === "resistor" || comp.kind === "inductor") {
+  if (b.standing) {
+    /* Leads too close for the body to lie flat: it stands on end over one
+     * lead, seen from above as the end of a cylinder, and the other lead
+     * comes back down beside it as a hairpin. */
+    // A polarised part stands on its marked (banded) end, so the mark is the
+    // lead under the body; anything else stands over its first lead.
+    const marked = x1 > x2 === markedRight ? p1 : p2;
+    const over = b.polarized ? marked : p1;
+    const cx = x(over.hole.col);
+    const back = over === p1 ? x2 : x1;
+    legs = `<path class="leg-wire" d="M ${cx} ${yy} C ${cx} ${yy - 16}, ${back} ${yy - 16}, ${back} ${yy}"/>${leadDot(
+      p1
+    )}${leadDot(p2)}`;
+    const cls =
+      comp.kind === "resistor" || comp.kind === "inductor"
+        ? "res-body"
+        : `diode-body${isGlass(comp) ? " glass" : ""}`;
+    const band = info?.bands?.colors?.[0];
+    body = `<circle class="${cls} standing" cx="${cx}" cy="${yy}" r="8"/>${
+      band ? `<circle cx="${cx}" cy="${yy}" r="3.6" fill="${esc(band)}"/>` : ""
+    }`;
+  } else if (comp.kind === "resistor" || comp.kind === "inductor") {
     const r = resistorBody(mid, yy, bw, info, comp.ref);
     body = r.svg;
     labelled = r.labelled;

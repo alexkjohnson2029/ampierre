@@ -104,7 +104,8 @@
     }
   ],
   "warnings": [
-    "Wave generator only — never wire this to mains. The four diodes all face the same way round the loop, which is the part that is easy to get wrong."
+    "Wave generator only — never wire this to mains. The four diodes all face the same way round the loop, which is the part that is easy to get wrong.",
+    "Earth ground: most bench generators and scopes tie their ground clips to mains earth. The generator's ground goes on AC2 here, not on GND, so don't also clip a scope's ground to GND: through earth that shorts D4. Measure VDC with a handheld meter, or keep the scope's ground clip on AC2 and use two probes: VDC minus GND. Expect VDC a little under 10 V − 1.4 V, since a 50 Ω generator sags under the 1 kΩ load and the LED."
   ],
   "sources": [
     {

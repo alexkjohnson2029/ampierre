@@ -49,6 +49,11 @@ COLOR_POS = "#dc2626"
 COLOR_NEG = "#2563eb"
 COLOR_GND = "#111827"
 
+#: Closest an axial part's leads can be while it lies flat along a row: a
+#: quarter-watt resistor or an axial diode has a body about 6 mm long, and
+#: three holes are 7.6 mm. Closer than that it has to stand on end.
+AXIAL_FLAT_GAP = 3
+
 THREE_LEAD = ("to92", "to220", "pot")
 #: How many rows past its leads a three-lead body covers, away from the channel.
 BODY_OVERHANG = {"to92": 1, "to220": 1, "pot": 2}
@@ -569,6 +574,16 @@ class Placer:
             body["marked_end"] = "right" if marked.hole.col > other.hole.col else "left"
         body["label_side"] = self._label_side(half, shared_row, cols)
 
+        orientation = self._orientation_text(comp, pkg, pins)
+        gap = abs(cols[0] - cols[-1])
+        if pkg.form == "axial" and shared_row and gap < AXIAL_FLAT_GAP:
+            body["standing"] = True
+            orientation = (
+                f"Stand it on end: its leads are only {gap} hole{'s' if gap > 1 else ''} "
+                "apart, too close for the body to lie flat. Bend one lead back down "
+                "beside the body. " + orientation
+            )
+
         self.placed.append(
             PlacedComponent(
                 ref=comp.ref,
@@ -576,7 +591,7 @@ class Placer:
                 package=pkg.id,
                 value=comp.value,
                 pins=pins,
-                orientation=self._orientation_text(comp, pkg, pins),
+                orientation=orientation,
                 body=body,
             )
         )
@@ -658,8 +673,11 @@ class Placer:
                 break
         return best[2] if best else None
 
-    def _try_rail_to_rail(self, comp, pkg, names, nets) -> bool:
-        """Decoupling caps and the like go straight between two adjacent rails."""
+    def _try_rail_to_rail(self, comp, pkg, names, nets, at: int | None = None) -> bool:
+        """Decoupling caps and the like go straight between two adjacent rails.
+
+        `at` asks for one column (a hand layout); otherwise the first free one
+        past the circuit is used."""
         roles = [self.role(n) for n in nets]
         pairs = {
             frozenset({NetRole.SUPPLY_POS, NetRole.GROUND}): (bb.RAIL_TOP_POS, bb.RAIL_TOP_NEG),
@@ -677,7 +695,7 @@ class Placer:
             (
                 c
                 for c in bb.RAIL_COLUMNS
-                if c >= self.rail_part_from
+                if (c == at if at is not None else c >= self.rail_part_from)
                 and self.board.is_free(rail_a, c)
                 and self.board.is_free(rail_b, c)
             ),
@@ -1085,7 +1103,7 @@ class Placer:
             None,
         )
         if col is None:
-            if not self._bond_through_strips(gnd):
+            if not self._bond_through_strips(gnd) and not self._bond_over_the_top(gnd):
                 self.warnings.append("No free column left to bond the two ground rails.")
             return
         self.board.occupy(bb.RAIL_TOP_NEG, col, "wire:gnd-bond")
@@ -1143,6 +1161,33 @@ class Placer:
                 )
             return True
         return False
+
+    def _bond_over_the_top(self, gnd: str) -> bool:
+        """Last resort for a full board: one long flexible jumper from ground
+        rail to ground rail, arched over the parts. It ends in two columns
+        side by side, so it is drawn (and reads) as a wire hopping over the
+        board rather than one lying along a column it doesn't connect to."""
+        free_top = [c for c in bb.RAIL_COLUMNS if self.board.is_free(bb.RAIL_TOP_NEG, c)]
+        free_bot = [c for c in bb.RAIL_COLUMNS if self.board.is_free(bb.RAIL_BOT_NEG, c)]
+        pairs = sorted(
+            ((t, b) for t in free_top for b in free_bot if t != b),
+            key=lambda tb: (abs(tb[0] - tb[1]), -max(tb)),
+        )
+        if not pairs:
+            return False
+        t, b = pairs[0]
+        self.board.occupy(bb.RAIL_TOP_NEG, t, "wire:gnd-bond")
+        self.board.occupy(bb.RAIL_BOT_NEG, b, "wire:gnd-bond")
+        self.wires.append(
+            Wire(
+                from_hole=Hole(row=bb.RAIL_TOP_NEG, col=t),
+                to_hole=Hole(row=bb.RAIL_BOT_NEG, col=b),
+                net=gnd,
+                color=COLOR_GND,
+                kind="rail_bond",
+            )
+        )
+        return True
 
     # -- text ---------------------------------------------------------------
 
@@ -1223,6 +1268,13 @@ class Placer:
         elif pkg.form in THREE_LEAD:
             face = "tab away from you" if pkg.form == "to220" else "flat face toward you"
             tail = f" ({face}: {'–'.join(p.name for p in pins)})"
+        if (
+            pkg.form == "axial"
+            and len(pins) == 2
+            and pins[0].hole.row == pins[1].hole.row
+            and abs(pins[0].hole.col - pins[1].hole.col) < AXIAL_FLAT_GAP
+        ):
+            tail += ", standing on end"
         return f"Place {comp.ref} {val}: {holes}{tail}."
 
     # -- drive --------------------------------------------------------------
@@ -1441,7 +1493,7 @@ def place(
     custom: dict[str, pk.Package] | None = None,
     style: str = "flow",
 ) -> Layout:
-    """style: "flow" (schematic-shaped, roomy), "flow-compact", or "packed".
+    """style: "flow" (schematic-shaped, roomy) or "packed".
 
     Tries the nicest layout first and steps down until one fits; the verifier
     decides what "fits" means, so a fallback is never a wrong board.
@@ -1466,8 +1518,8 @@ def place(
         if by_hand is not None and not _failed(by_hand):
             return by_hand
 
-    def flow_once(spacing: int, top_only: bool, **options) -> Layout:
-        placer = FlowPlacer(netlist, custom, spacing=spacing, top_only=top_only, **options)
+    def flow_once(spacing: int, **options) -> Layout:
+        placer = FlowPlacer(netlist, custom, spacing=spacing, **options)
         try:
             layout = placer.run()
         except ValueError as err:  # ran off the end of the board
@@ -1484,13 +1536,13 @@ def place(
         }
         if idle and not _failed(layout):
             tighter = FlowPlacer(
-                netlist, custom, spacing=spacing, top_only=top_only, skip_homes=idle, **options
+                netlist, custom, spacing=spacing, skip_homes=idle, **options
             ).run()
             if not _failed(tighter):
                 return tighter
         return layout
 
-    def flow(spacing: int, top_only: bool = False) -> Layout:
+    def flow(spacing: int) -> Layout:
         """Lay the board out a few ways and keep the cleanest.
 
         Placement is greedy, so small choices — nudging a block off a rail
@@ -1500,7 +1552,7 @@ def place(
         The first option listed wins a tie.
         """
         tries = [
-            flow_once(spacing, top_only, dodge_gaps=dodge, rail_mount=mount)
+            flow_once(spacing, dodge_gaps=dodge, rail_mount=mount)
             for mount in (True, "light", False)
             for dodge in (True, False)
         ]
@@ -1509,26 +1561,9 @@ def place(
             return tries[0]
         return min(good, key=lambda t: quality.measure(t).score)
 
-    if style == "flow-compact":
-        # Compact keeps the circuit above the channel when it can. "When it
-        # can" means without making the wiring worse: if fitting everything
-        # into five rows forces diagonal jumpers, crossings or wires over
-        # parts that the two-half layout doesn't need, the circuit needs more
-        # space and the two-half layout wins.
-        top = flow(2, top_only=True)
-        both = flow(2)
-        if not _failed(top) and (
-            _failed(both) or quality.measure(top).score <= quality.measure(both).score
-        ):
-            return top
-        if not _failed(both):
-            return both
-        fallbacks = (1, 3, 4)
-    else:
-        fallbacks = (4, 3, 2, 1)
-    # A big circuit that won't fit one way may fit with its columns closer
-    # together (or further apart) before giving up on the schematic shape.
-    for spacing in fallbacks:
+    # A big circuit that won't fit may fit with its columns closer together
+    # before giving up on the schematic shape.
+    for spacing in (4, 3, 2, 1):
         layout = flow(spacing)
         if not _failed(layout):
             return layout
