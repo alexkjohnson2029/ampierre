@@ -48,9 +48,11 @@
           <h2><span class="step">1</span> Paste a netlist</h2>
           <p class="hint">
             Most SPICE programs can export a netlist. In LTspice, for example, open your schematic
-            and choose <strong>View → SPICE Netlist</strong>, then copy everything and paste it here. A PSpice <code>.cir</code> or <code>.net</code> file, or
-            a netlist written by hand, works the same way. Simulation commands such as <code>.tran</code>
-            and <code>.ac</code> are skipped.
+            and choose <strong>View → SPICE Netlist</strong>, then copy everything and paste it here.
+            LTspice's <strong>View → Export Netlist</strong> in ExpressPCB format, a PSpice <code>.cir</code>
+            or <code>.net</code> file, or a netlist written by hand, works the same way. Simulation commands
+            such as <code>.tran</code> and <code>.ac</code> are skipped. A part AMPierre doesn't know, like a
+            chip with its own <code>.subckt</code>, comes through too: you give its pinout on the next step.
           </p>
           <textarea id="spice" rows="12" spellcheck="false" placeholder="* my circuit&#10;V1 VCC 0 9&#10;R1 VCC N001 10k&#10;R2 N001 0 10k&#10;Q1 OUT N001 0 2N3904&#10;R3 VCC OUT 1k&#10;.end"></textarea>
           <div class="row">

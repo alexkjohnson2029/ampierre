@@ -81,9 +81,20 @@ $("spice-file").onchange = async (e) => {
   const f = e.target.files[0];
   e.target.value = "";
   if (!f) return;
-  $("spice").value = await f.text();
+  $("spice").value = await readNetlistFile(f);
   $("spice").oninput();
 };
+
+/* LTspice saves netlists in Windows-1252, so its µ isn't valid UTF-8.
+ * Read UTF-8 when the file is UTF-8, and Windows-1252 when it isn't. */
+async function readNetlistFile(f) {
+  const bytes = await f.arrayBuffer();
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return new TextDecoder("windows-1252").decode(bytes);
+  }
+}
 
 $("parse").onclick = async () => {
   const err = $("parse-error");
@@ -383,10 +394,12 @@ function customCard(q) {
     { npn: "to92", pnp: "to92", nmos: "to92", pmos: "to92", regulator: "to220", diode: "axial" }[
       q.kind
     ] || "dip";
+  /* A DIP big enough for every pin the schematic uses, eight at the least. */
+  const dipPins = Math.max(8, q.pins.length + (q.pins.length % 2));
   const spec = (state.custom[q.id] ||= {
     name: q.value || "",
     form: defaultForm,
-    pin_count: defaultForm === "dip" ? 8 : defaultForm === "axial" ? 2 : 3,
+    pin_count: defaultForm === "dip" ? dipPins : defaultForm === "axial" ? 2 : 3,
     pin_map: {},
   });
 
@@ -426,10 +439,17 @@ function customCard(q) {
     <div class="cf-pins"></div>`;
 
   const pins = form.querySelector(".cf-pins");
+  /* A pasted part's pins may only have numbers (its order in the netlist), so
+   * show the net each one is on: that's what you match against the datasheet. */
+  const first = state.netlist?.components.find((c) => c.ref === q.refs[0]);
   for (const logical of q.pins) {
     const row = document.createElement("label");
     row.className = "cf-pin";
-    row.innerHTML = `<span>${escapeHtml(logical)}</span>
+    const net = first?.pins[logical];
+    row.title = net ? `${logical} is on net ${net}` : "";
+    row.innerHTML = `<span>${escapeHtml(logical)}${
+      net ? ` <small class="cf-net">${escapeHtml(net)}</small>` : ""
+    }</span>
       <input type="number" min="1" max="40" step="1" value="${spec.pin_map?.[logical] ?? ""}" placeholder="pin #">`;
     row.querySelector("input").onchange = (e) => {
       const v = parseInt(e.target.value, 10);
