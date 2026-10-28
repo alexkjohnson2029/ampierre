@@ -230,6 +230,8 @@ function showParse(data, about = null) {
   state.picks = Object.fromEntries(data.questions.map((q) => [q.id, q.suggested]));
   state.custom = {};
   state.filters = {};
+  state.supplies = data.supplies || [];
+  state.rails = Object.fromEntries(state.supplies.map((s) => [s.net, s.choice]));
 
   const nets = new Set();
   for (const c of data.netlist.components) for (const n of Object.values(c.pins)) nets.add(n);
@@ -239,10 +241,108 @@ function showParse(data, about = null) {
     `${nComp} ${nComp === 1 ? "component" : "components"}, ${nets.size} ${nets.size === 1 ? "net" : "nets"}` +
     (nWarn ? `. ${nWarn} ${nWarn === 1 ? "thing" : "things"} to check on the board.` : "");
 
+  renderSupplies();
   renderQuestions();
   $("step-parts").hidden = false;
   showPane("input");
   $("step-parts").scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+}
+
+/* Supplies and inputs: which net goes on which + rail, and which are
+ * inputs that change. AMPierre makes the first call; this is where you
+ * overrule it. Ground always has the − rails, so it isn't listed. */
+const RAIL_LABELS = {
+  top: "Top + rail (positive supply)",
+  bottom: "Bottom + rail (negative supply)",
+  input: "Input: a changing voltage, wired into the board",
+};
+const NOT_A_SUPPLY = "";
+
+function railClash() {
+  for (const rail of ["top", "bottom"]) {
+    const on = Object.keys(state.rails).filter((n) => state.rails[n] === rail);
+    if (on.length > 1)
+      return `Only one supply fits on the ${rail} + rail, and ${on.join(" and ")} are both there. Move one, or make it an input.`;
+  }
+  return "";
+}
+
+function renderSupplies() {
+  const box = $("supplies");
+  box.innerHTML = "";
+  const nets = new Set();
+  for (const c of state.netlist.components) for (const n of Object.values(c.pins)) nets.add(n);
+  for (const s of state.netlist.sources || []) nets.add(s.pos), nets.add(s.neg);
+  const isGround = (n) =>
+    n === "GND" || (state.netlist.nets || []).some((x) => x.name === n && x.role === "ground");
+  const known = new Map(state.supplies.map((s) => [s.net, s]));
+
+  const el = document.createElement("div");
+  el.className = "question supplies";
+  el.innerHTML = `<header><span class="ref">Supplies and inputs</span>
+    <span class="kind">Ground always goes on both − rails. Choose what goes on the + rails, and which voltages are inputs.</span></header>`;
+
+  const list = document.createElement("div");
+  list.className = "sup-list";
+  const listed = Object.keys(state.rails);
+  if (!listed.length) {
+    const none = document.createElement("p");
+    none.className = "hint";
+    none.textContent = "AMPierre didn't find a supply in this circuit. Add the nets that should go on a rail below.";
+    list.append(none);
+  }
+  for (const net of listed) {
+    const info = known.get(net);
+    const row = document.createElement("label");
+    row.className = "sup-row";
+    const what = [info?.value, info?.sources?.length ? `from ${info.sources.join(", ")}` : ""]
+      .filter(Boolean)
+      .join(" · ");
+    row.innerHTML = `<span class="sup-net">${escapeHtml(net)}${
+      what ? ` <small>${escapeHtml(what)}</small>` : ""
+    }</span>`;
+    const sel = document.createElement("select");
+    sel.setAttribute("aria-label", `Where ${net} goes`);
+    for (const [v, label] of Object.entries(RAIL_LABELS)) sel.add(new Option(label, v));
+    if (!info) sel.add(new Option("Not a supply: leave it as a normal net", NOT_A_SUPPLY));
+    sel.value = state.rails[net];
+    sel.onchange = () => {
+      if (sel.value === NOT_A_SUPPLY) delete state.rails[net];
+      else state.rails[net] = sel.value;
+      renderSupplies();
+    };
+    row.append(sel);
+    list.append(row);
+  }
+  el.append(list);
+
+  const others = [...nets].filter((n) => !isGround(n) && !(n in state.rails)).sort();
+  if (others.length) {
+    const add = document.createElement("label");
+    add.className = "sup-add";
+    add.innerHTML = "<span>Put another net on a rail, or mark it as an input</span>";
+    const sel = document.createElement("select");
+    sel.add(new Option("Choose a net…", ""));
+    for (const n of others) sel.add(new Option(n, n));
+    sel.onchange = () => {
+      if (!sel.value) return;
+      const taken = new Set(Object.values(state.rails));
+      state.rails[sel.value] = !taken.has("top") ? "top" : !taken.has("bottom") ? "bottom" : "input";
+      renderSupplies();
+    };
+    add.append(sel);
+    el.append(add);
+  }
+
+  const clash = railClash();
+  if (clash) {
+    const warn = document.createElement("p");
+    warn.className = "pin-warn";
+    warn.setAttribute("role", "alert");
+    warn.textContent = clash;
+    el.append(warn);
+  }
+  box.append(el);
 }
 
 function optionUsedMap(q, opt) {
@@ -480,6 +580,12 @@ function customCard(q) {
 
 $("build").onclick = async () => {
   showError("build-error", "");
+  const clash = railClash();
+  if (clash) {
+    showError("build-error", clash);
+    $("supplies").scrollIntoView({ behavior: scrollBehavior(), block: "center" });
+    return;
+  }
   busy(true, "placing parts and routing jumpers…");
   try {
     const packages = {};
@@ -498,6 +604,7 @@ $("build").onclick = async () => {
         netlist: state.netlist,
         packages,
         custom_packages,
+        rails: state.rails,
       }),
     });
     showLayout(layout);

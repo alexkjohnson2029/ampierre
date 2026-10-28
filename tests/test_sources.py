@@ -177,3 +177,72 @@ def test_a_vcc_label_with_no_source_still_gets_its_rail_and_a_supply():
     leads = _leads("* buffer\nV3 in 0 SINE(0 1 1k)\nR1 in a 1k\nXU1 a out VCC VEE out TL072\n")
     assert leads[("+", "VCC")] == bb.RAIL_TOP_POS
     assert leads[("−", "VEE")] == bb.RAIL_BOT_POS
+
+
+# ---------------------------------------------------------------------------
+# The user's own call on what goes on a rail
+# ---------------------------------------------------------------------------
+
+_UNNAMED_SUPPLIES = """* follower on supplies with no supply names
+V1 N001 0 12
+V2 N002 0 -12
+V3 VCC 0 5
+XU1 in out N001 N002 out TL072
+R1 in 0 1k
+R2 VCC out 1k
+"""
+
+
+def _board(text, rails):
+    from app.breadboard import verify
+    from app.service import PasteRequest, PlaceRequest, from_text, lay_out
+
+    nl = from_text(PasteRequest(text=text)).netlist
+    layout = lay_out(PlaceRequest(netlist=nl, rails=rails))
+    assert verify(layout) == []
+    return {(l.terminal, l.net): l.hole.row for l in layout.leads}
+
+
+def test_the_parts_step_lists_each_supply_with_the_engines_call():
+    from app.service import PasteRequest, from_text
+
+    sup = {s.net: s for s in from_text(PasteRequest(text=_UNNAMED_SUPPLIES)).supplies}
+    assert sup["N001"].choice == "top" and sup["N001"].sources == ["V1"]
+    assert sup["N002"].choice == "bottom"
+    assert "GND" not in sup
+
+
+def test_a_supply_can_be_moved_off_a_rail_and_made_an_input():
+    leads = _board(_UNNAMED_SUPPLIES, {"N001": "top", "N002": "bottom", "VCC": "input"})
+    assert leads[("+", "N001")] == bb.RAIL_TOP_POS
+    assert leads[("−", "N002")] == bb.RAIL_BOT_POS
+    assert not leads[("+", "VCC")].startswith("RAIL")
+
+
+def test_any_net_can_be_put_on_a_rail_by_hand():
+    # nothing here is named or drawn like a supply
+    text = "* x\nXU1 in out P M out TL072\nR1 in 0 1k\nR2 out 0 10k\n"
+    leads = _board(text, {"P": "top", "M": "bottom"})
+    assert leads[("+", "P")] == bb.RAIL_TOP_POS
+    assert leads[("−", "M")] == bb.RAIL_BOT_POS
+
+
+def test_a_net_marked_as_an_input_gets_a_wave_generator():
+    text = "* x\nV1 VCC 0 9\nR1 VCC sense 10k\nR2 sense 0 10k\nR3 VCTL sense 1k\n"
+    leads = _board(text, {"VCC": "top", "VCTL": "input"})
+    assert not leads[("signal", "VCTL")].startswith("RAIL")
+
+
+def test_a_wave_generator_put_on_a_rail_is_a_supply():
+    leads = _board("* x\nV1 A 0 SINE(0 1 1k)\nR1 A 0 1k\n", {"A": "top"})
+    assert leads[("+", "A")] == bb.RAIL_TOP_POS
+
+
+def test_two_supplies_on_one_rail_is_said_plainly():
+    from app.service import PasteRequest, PlaceRequest, ServiceError, from_text, lay_out
+
+    nl = from_text(PasteRequest(text=_UNNAMED_SUPPLIES)).netlist
+    with pytest.raises(ServiceError, match="Only one supply fits on the top"):
+        lay_out(PlaceRequest(netlist=nl, rails={"N001": "top", "VCC": "top"}))
+    with pytest.raises(ServiceError, match="ground"):
+        lay_out(PlaceRequest(netlist=nl, rails={"GND": "top"}))

@@ -27,6 +27,7 @@ from .service import (  # noqa: F401 — re-exported for tests and callers
     PasteRequest,
     PlaceRequest,
     questions_for,
+    supply_choices,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -85,7 +86,7 @@ def example_route(name: str):
     if not f.exists():
         raise HTTPException(404, "No such example.")
     netlist = Netlist.model_validate_json(f.read_text(encoding="utf-8"))
-    return ParseResponse(netlist=netlist, questions=questions_for(netlist))
+    return ParseResponse(netlist=netlist, questions=questions_for(netlist), supplies=supply_choices(netlist))
 
 
 @app.get("/")
