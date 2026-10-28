@@ -14,6 +14,7 @@ import json
 import re
 from pathlib import PureWindowsPath
 
+from . import pinlists
 from .models import Component, ComponentKind, Net, Netlist, NetRole, Source
 
 
@@ -24,8 +25,8 @@ class SpiceError(ValueError):
 #: Part numbers whose type a bare Q or M line doesn't give away.
 _PNP = re.compile(r"^(2N(3906|4403|2907|5401|4126)|BC(55[6789]|32[78]|640)|TIP(3[24]|42|127|147)|BD(1[34][02468])|MJE(350|2955)|PN2907|S8550|A1015)", re.I)
 _NPN = re.compile(r"^(2N(3904|2222|4401|2219|5551|3055|4124)|PN2222|BC(54[6789]|33[78]|639)|TIP(3[13]|41|122|142)|BD(1[34][13579])|MJE(340|3055)|S8050|C1815)", re.I)
-_PMOS = re.compile(r"^(BS250|IRF9|FQP\d+P|NDP\d+P|SI2301|AO3401|PMOS)", re.I)
-_NMOS = re.compile(r"^(2N7000|2N7002|BS170|IRF[0-8Z]|IRL|FQP\d+N|NDP\d+N|SI2302|AO3400|NMOS)", re.I)
+_PMOS = re.compile(r"^(BS250|IRF9|ZVP|FQP\d+P|NDP\d+P|SI2301|AO3401|PMOS)", re.I)
+_NMOS = re.compile(r"^(2N7000|2N7002|BS170|IRF[0-8Z]|IRL|FQP\d+N|NDP\d+N|SI2302|AO3400|ZVN|NMOS)", re.I)
 _LED = re.compile(r"LED|^(NSPW|NSSW|QTLP|LXHL|LUW|LW|LR|LY|LG)\w*", re.I)
 _REGULATOR = re.compile(r"^(LM)?(78|79)(L|M)?\d\d|LM317|LM337|LM1117|AMS1117|LT1086|LT1117|LM2940|LD1117", re.I)
 _POT = re.compile(r"pot", re.I)
@@ -44,7 +45,21 @@ def parse(text: str) -> Netlist:
             return Netlist.model_validate(json.loads(stripped))
         except Exception as e:  # noqa: BLE001 — any bad JSON is the same mistake
             raise SpiceError(f"That looks like JSON but isn't a netlist: {e}") from e
+    stripped = _fix_micro(stripped)
+    if pinlists.detect(stripped):
+        try:
+            stripped = pinlists.to_spice(stripped)
+        except pinlists.PinListError as e:
+            raise SpiceError(str(e)) from e
     return _Reader(stripped).read()
+
+
+def _fix_micro(text: str) -> str:
+    """LTspice saves netlists in Windows-1252, where µ is one byte. Opened as
+    UTF-8 that byte turns into '�', and the other way round µ turns into
+    'Âµ'. After a number, either one can only have been µ."""
+    text = text.replace("\u00c2\u00b5", "µ")
+    return re.sub(r"(?<=[0-9.])\ufffd", "µ", text)
 
 
 def spice_value(text: str | None) -> str | None:
@@ -75,6 +90,7 @@ class _Reader:
         self.lines = self._logical_lines(text)
         self.title = "Pasted netlist"
         self.models: dict[str, str] = {}  # .model name -> type (NPN, PMOS, D...)
+        self.ports: dict[str, list[str]] = {}  # .subckt name -> its pin names
         self.warnings: list[str] = []
         self.components: list[Component] = []
         self.sources: list[Source] = []
@@ -113,6 +129,17 @@ class _Reader:
                     kind = re.match(r"[A-Za-z]+", parts[2])
                     if kind:
                         self.models[parts[1].upper()] = kind.group(0).upper()
+            elif line.lower().startswith(".subckt"):
+                # .subckt NAME port port... [params: x=1]: a part of the user's
+                # own, and its ports are the names its pins go by.
+                words = line.split()[1:]
+                if words:
+                    ports = []
+                    for w in words[1:]:
+                        if "=" in w or w.lower().startswith("params"):
+                            break
+                        ports.append(w)
+                    self.ports[words[0].upper()] = ports
 
         in_subckt = 0
         for line in lines:
@@ -143,6 +170,9 @@ class _Reader:
             self.warnings.append(
                 f"Skipped {', '.join(names)} — {what} are simulation-only and have no breadboard part."
             )
+
+        unnamed = f" ({pinlists.UNNAMED})"
+        self.warnings = [w.replace(unnamed, "") for w in self.warnings]
 
         if not self.components:
             raise SpiceError(
@@ -289,6 +319,11 @@ class _Reader:
         elif n == 5:
             # LTspice's op-amp symbols: In+ In- V+ V- Out
             self._add(ref, ComponentKind.OPAMP, model, {"IN+": nodes[0], "IN-": nodes[1], "V+": nodes[2], "V-": nodes[3], "OUT": nodes[4]})
+            if model == pinlists.UNNAMED:
+                self.warnings.append(
+                    f"{ref}: the netlist gives no part number, so it was read as an op-amp "
+                    "from its five pins (In+, In−, V+, V−, Out). Check it."
+                )
         elif n == 3 and re.search(r"opamp|^U?A?741|^TL0|^LM(3[25]8|741)|^LT1|^OP", model, re.I):
             # the ideal three-pin op-amp has no supply pins at all
             self._add(ref, ComponentKind.OPAMP, model, {"IN+": nodes[0], "IN-": nodes[1], "OUT": nodes[2]})
@@ -296,16 +331,35 @@ class _Reader:
                 f"{ref}: the netlist's op-amp has no supply pins (an ideal model). "
                 "Its chip still needs V+ and V- — wire them to the rails yourself."
             )
+        elif self._named_ports(model, n):
+            # A part the netlist defines itself: its .subckt line names the pins.
+            ports = self.ports[model.upper()]
+            self._add(ref, ComponentKind.IC, model, dict(zip(ports, nodes)))
+            self.warnings.append(
+                f"{ref} ({model}): your own part, with pins {', '.join(ports)} from its .subckt line. "
+                "Choose My own part on the next screen and give each one's pin number."
+            )
         else:
             pins = {str(i + 1): node for i, node in enumerate(nodes)}
             self._add(ref, ComponentKind.IC, model, pins)
             self.warnings.append(
-                f"{ref} ({model}): an unknown subcircuit with {n} pins, numbered in netlist order. "
-                "Pick its pinout on the next screen."
+                f"{ref} ({model}): a part AMPierre doesn't know, with {n} pins numbered in netlist order. "
+                "Choose My own part on the next screen and give each one's pin number from the datasheet."
             )
+
+    def _named_ports(self, model: str, n: int) -> bool:
+        ports = self.ports.get(model.upper())
+        return bool(
+            ports
+            and len(ports) == n
+            and len(set(ports)) == n
+            and not all(p.isdigit() for p in ports)
+        )
 
     def _add(self, ref: str, kind: ComponentKind, value: str | None, pins: dict[str, str]) -> None:
         if any(c.ref == ref for c in self.components):
             self.warnings.append(f"Two parts are called {ref}; the second was skipped.")
             return
+        if value == pinlists.UNNAMED:
+            value = None
         self.components.append(Component(ref=ref, kind=kind, value=value, pins=pins))

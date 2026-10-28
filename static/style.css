@@ -175,6 +175,7 @@ a.ghost { font-size: 13px; color: var(--muted); text-decoration: none; border: 1
 .cf-pins { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .cf-pin { display: flex; align-items: center; gap: 6px; font-size: 12.5px; }
 .cf-pin span { font-family: ui-monospace, Menlo, monospace; }
+.cf-pin .cf-net { color: var(--muted); font-size: 11px; }
 .cf-pin input { width: 72px; padding: 5px 7px; font-size: 13px; }
 
 .pinout-col { position: sticky; top: 14px; }
