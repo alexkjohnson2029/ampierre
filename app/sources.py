@@ -113,11 +113,14 @@ def classify(placer) -> list[str]:
                 # ground with 4.5 V, or + terminal on the net with −4.5 V (how
                 # LTspice users usually draw it). Both make the net negative.
                 negative = (hot == src.neg) != _is_negative(src.value)
-                nets[hot].role = NetRole.SUPPLY_NEG if negative else NetRole.SUPPLY_POS
+                if nets[hot].pinned:
+                    negative = nets[hot].role is NetRole.SUPPLY_NEG
+                else:
+                    nets[hot].role = NetRole.SUPPLY_NEG if negative else NetRole.SUPPLY_POS
                 nets[hot].voltage = _volts(src.value, negative) or nets[hot].voltage
         else:
             for net in (src.pos, src.neg):
-                if net in nets and net not in grounds:
+                if net in nets and net not in grounds and not nets[net].pinned:
                     if nets[net].role in (NetRole.SUPPLY_POS, NetRole.SUPPLY_NEG):
                         notes.append(
                             f"{net} is driven by {src.ref} ({'wave generator' if src.kind == 'signal' else 'an input source'}), "
@@ -134,6 +137,7 @@ def classify(placer) -> list[str]:
         if (
             info.role in (NetRole.SUPPLY_POS, NetRole.SUPPLY_NEG)
             and net not in powered
+            and not info.pinned
             and input_name(net)
         ):
             info.role = NetRole.INPUT
@@ -147,9 +151,14 @@ def classify(placer) -> list[str]:
     # at all (older ones, hand-written ones) get a wave generator on each
     # input too.
     no_sources = not resolved
+    driven = {r.pos for r in resolved} | {r.neg for r in resolved}
     ground = next(iter(sorted(grounds)), None)
     for net, info in nets.items():
         if not ground or net in powered:
+            continue
+        if info.pinned and info.role is NetRole.INPUT and net not in driven:
+            # marked as an input that changes, with nothing drawn driving it
+            resolved.append(Resolved(f"GEN {net}", "signal", net, ground, None, "input", True))
             continue
         if info.role is NetRole.SUPPLY_POS:
             resolved.append(Resolved(f"DC {net}", "dc", net, ground, info.voltage, "power", True))

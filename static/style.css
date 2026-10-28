@@ -151,6 +151,15 @@ a.ghost { font-size: 13px; color: var(--muted); text-decoration: none; border: 1
 .question .ref { font-weight: 700; }
 .question .kind { color: var(--muted); font-size: 13px; }
 
+/* supplies and inputs */
+.sup-list { display: flex; flex-direction: column; gap: 7px; }
+.sup-row, .sup-add { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 13px; }
+.sup-row { border: 1px solid var(--line); padding: 8px 11px; background: #fff; justify-content: space-between; }
+.sup-net { font-family: ui-monospace, Menlo, monospace; font-weight: 600; }
+.sup-net small { font-family: inherit; font-weight: 400; color: var(--muted); margin-left: 6px; }
+.sup-add { margin-top: 10px; color: var(--muted); }
+.sup-row select, .sup-add select { width: auto; min-width: min(320px, 100%); max-width: 100%; }
+
 /* choices on the left, the pinout of the chosen part on the right */
 .q-body { display: grid; grid-template-columns: minmax(300px, 1fr) 340px; gap: 20px; align-items: start; }
 .options { display: flex; flex-direction: column; gap: 7px; }

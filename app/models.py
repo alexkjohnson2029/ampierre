@@ -37,6 +37,11 @@ class Net(BaseModel):
         default=None,
         description="Text shown when hovering a rail, e.g. '+9 V', '-9 V', '0 V'.",
     )
+    pinned: bool = Field(
+        default=False,
+        description="The user chose this role (a rail, or an input): nothing in "
+        "the placer second-guesses it.",
+    )
 
 
 # ---------------------------------------------------------------------------

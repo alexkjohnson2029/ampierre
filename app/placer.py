@@ -127,7 +127,8 @@ class Placer:
             declared = next((n for n in netlist.nets if n.name == name), None)
             role = declared.role if declared else infer_role(name)
             voltage = (declared.voltage if declared else None) or default_voltage(name, role)
-            self.nets[name] = Net(name=name, role=role, voltage=voltage)
+            pinned = bool(declared and declared.pinned)
+            self.nets[name] = Net(name=name, role=role, voltage=voltage, pinned=pinned)
         # A source's lead on GND is on ground even when no part is.
         for source in netlist.sources:
             for name in (source.pos, source.neg):

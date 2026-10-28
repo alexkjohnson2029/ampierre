@@ -12,8 +12,8 @@ import json
 from pydantic import BaseModel, ValidationError
 
 from . import packages as pk
-from .models import AMBIGUOUS_KINDS, ComponentKind, Layout, Netlist
-from .placer import place
+from .models import AMBIGUOUS_KINDS, ComponentKind, Layout, Net, Netlist, NetRole
+from .placer import Placer, place
 from .spice import SpiceError
 from .spice import parse as parse_spice
 
@@ -118,9 +118,91 @@ def questions_for(netlist: Netlist) -> list[PackageQuestion]:
     return out
 
 
+# ---------------------------------------------------------------------------
+# Supplies and inputs
+# ---------------------------------------------------------------------------
+
+#: What the user can say a net is for, and the role each choice gives it.
+RAIL_CHOICES = {
+    "top": NetRole.SUPPLY_POS,  # top + rail: the positive supply
+    "bottom": NetRole.SUPPLY_NEG,  # bottom + rail: the negative supply
+    "input": NetRole.INPUT,  # a voltage that changes: wired into the strips
+}
+_CHOICE_FOR_ROLE = {role: choice for choice, role in RAIL_CHOICES.items()}
+
+
+class SupplyChoice(BaseModel):
+    net: str
+    choice: str  # "top" | "bottom" | "input"
+    value: str | None = None  # the voltage, when a source says it
+    sources: list[str] = []  # the sources driving it, V1...
+
+
+def supply_choices(netlist: Netlist) -> list[SupplyChoice]:
+    """Every net that will go on a + rail or get an input lead, as the placer
+    would decide it, so the user can see the call and change it."""
+    if not netlist.components:
+        return []
+    placer = Placer(netlist)
+    out: list[SupplyChoice] = []
+    for name, net in placer.nets.items():
+        choice = _CHOICE_FOR_ROLE.get(net.role)
+        if choice is None:
+            continue
+        drivers = [s for s in netlist.sources if name in (s.pos, s.neg)]
+        out.append(
+            SupplyChoice(
+                net=name,
+                choice=choice,
+                value=net.voltage or next((s.value for s in drivers if s.value), None),
+                sources=[s.ref for s in drivers],
+            )
+        )
+    order = {"top": 0, "bottom": 1, "input": 2}
+    return sorted(out, key=lambda c: order[c.choice])
+
+
+def _with_rails(netlist: Netlist, rails: dict[str, str]) -> Netlist:
+    """The netlist with the user's own call on each net: which + rail it goes
+    on, or that it is an input. The sources driving a net follow it."""
+    if not rails:
+        return netlist
+    for net, choice in rails.items():
+        if choice not in RAIL_CHOICES:
+            raise ServiceError(f"Unknown rail choice '{choice}' for {net}")
+        if any(n.name == net and n.role is NetRole.GROUND for n in netlist.nets) or net in ("GND", "0"):
+            raise ServiceError(f"{net} is ground: it always goes on the − rails.")
+    for rail, where in (("top", "top + rail"), ("bottom", "bottom + rail")):
+        on = sorted(net for net, choice in rails.items() if choice == rail)
+        if len(on) > 1:
+            raise ServiceError(
+                f"Only one supply fits on the {where}, and {' and '.join(on)} are both there. "
+                "Move one to the other rail, or make it an input."
+            )
+    nl = netlist.model_copy(deep=True)
+    declared = {n.name: n for n in nl.nets}
+    for net, choice in rails.items():
+        role = RAIL_CHOICES[choice]
+        if net in declared:
+            declared[net].role = role
+            declared[net].pinned = True
+        else:
+            nl.nets.append(Net(name=net, role=role, pinned=True))
+        for src in nl.sources:
+            if net not in (src.pos, src.neg):
+                continue
+            if choice == "input":
+                src.purpose = "input"
+            else:
+                src.purpose = "power"
+                src.kind = "dc"  # anything on a rail is a bench supply
+    return nl
+
+
 class ParseResponse(BaseModel):
     netlist: Netlist
     questions: list[PackageQuestion]
+    supplies: list[SupplyChoice] = []
 
 
 # ---------------------------------------------------------------------------
@@ -150,6 +232,8 @@ class PlaceRequest(BaseModel):
     #: "flow" = schematic-shaped, "packed" = fill the board regardless of
     #: what it looks like.
     style: str = "flow"
+    #: net -> "top" | "bottom" | "input": the user's call on what goes on a rail.
+    rails: dict[str, str] = {}
 
 
 def from_text(req: PasteRequest) -> ParseResponse:
@@ -158,14 +242,14 @@ def from_text(req: PasteRequest) -> ParseResponse:
         netlist = parse_spice(req.text)
     except SpiceError as e:
         raise ServiceError(str(e)) from e
-    return ParseResponse(netlist=netlist, questions=questions_for(netlist))
+    return ParseResponse(netlist=netlist, questions=questions_for(netlist), supplies=supply_choices(netlist))
 
 
 def from_netlist(netlist: Netlist) -> ParseResponse:
     """A netlist drawn in the editor (or an example): straight to the questions."""
     if not netlist.components:
         raise ServiceError("The netlist has no components.")
-    return ParseResponse(netlist=netlist, questions=questions_for(netlist))
+    return ParseResponse(netlist=netlist, questions=questions_for(netlist), supplies=supply_choices(netlist))
 
 
 _A_KIND = {
@@ -211,7 +295,7 @@ def lay_out(req: PlaceRequest) -> Layout:
         _check_pins_fit(comp, custom.get(comp.ref) or pk.get(comp.package, comp.kind))
     if req.style not in ("flow", "packed"):
         raise ServiceError(f"Unknown layout style '{req.style}'")
-    return place(req.netlist, custom, style=req.style)
+    return place(_with_rails(req.netlist, req.rails), custom, style=req.style)
 
 
 def _check_pins_fit(comp, pkg: pk.Package) -> None:
