@@ -17,6 +17,8 @@ The strategy is the one a person uses at the bench:
 
 from __future__ import annotations
 
+import re
+
 from collections import defaultdict
 
 from . import breadboard as bb
@@ -41,8 +43,10 @@ from .models import (
 # Net roles and colours
 # ---------------------------------------------------------------------------
 
-_POS_NAMES = {"V+", "VCC", "VDD", "VS+", "VPLUS", "VBAT", "VIN+", "+V"}
-_NEG_NAMES = {"V-", "VEE", "VSS", "VS-", "VMINUS", "-V"}
+#: Supply names, with or without a sign in front or a suffix after: VCC,
+#: +VCC, VCC1, VCC_5V, VDDA, V+15, VEE_A, -VEE...
+_POS_NAME = re.compile(r"^(VCC|VDD|VBAT|VPLUS|VPOS|VS\+|V\+|\+V)([_.\-]?[0-9A-Z.]*)$")
+_NEG_NAME = re.compile(r"^(VEE|VSS|VMINUS|VNEG|VS-|V-|-V)([_.\-]?[0-9A-Z.]*)$")
 _GND_NAMES = {"GND", "0", "AGND", "DGND", "GROUND", "COM", "VGND"}
 
 COLOR_POS = "#dc2626"
@@ -64,9 +68,11 @@ def infer_role(name: str) -> NetRole:
     u = name.strip().upper()
     if u in _GND_NAMES:
         return NetRole.GROUND
-    if u in _POS_NAMES:
+    if _NEG_NAME.match(u) or (u.startswith("-") and _POS_NAME.match(u[1:])):
+        return NetRole.SUPPLY_NEG  # -VCC is a negative supply whatever its stem
+    if _POS_NAME.match(u) or (u.startswith("+") and _POS_NAME.match(u[1:])):
         return NetRole.SUPPLY_POS
-    if u in _NEG_NAMES:
+    if u.startswith("+") and _NEG_NAME.match(u[1:]):
         return NetRole.SUPPLY_NEG
     # +9V / -12V style names
     if u.startswith("+") and u.rstrip("V").lstrip("+").replace(".", "").isdigit():
@@ -122,6 +128,11 @@ class Placer:
             role = declared.role if declared else infer_role(name)
             voltage = (declared.voltage if declared else None) or default_voltage(name, role)
             self.nets[name] = Net(name=name, role=role, voltage=voltage)
+        # A source's lead on GND is on ground even when no part is.
+        for source in netlist.sources:
+            for name in (source.pos, source.neg):
+                if name not in self.nets and infer_role(name) is NetRole.GROUND:
+                    self.nets[name] = Net(name=name, role=NetRole.GROUND, voltage="0 V")
 
         # Only a DC source that powers the circuit gets a supply rail; inputs
         # (wave generators, test voltages) are wired into their own strips.

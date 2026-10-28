@@ -21,7 +21,6 @@ from .models import ExternalLead, Hole, NetRole, Source
 POWER_PINS = {"V+", "V-", "VCC", "VEE", "VDD", "VSS", "VS+", "VS-"}
 POWER_PIN_KINDS = {"opamp", "ic", "regulator"}
 
-_SUPPLY_NAME = re.compile(r"^(VCC|VDD|VEE|VSS|V\+|V-|VS\+|VS-|[+-]?\d+(\.\d+)?V)$")
 _INPUT_NAME = re.compile(r"^(V?IN|INPUT|SIG(NAL)?|V?SIG|V?AC\d*|.*_IN|IN[+-]?|VIN\d*)$")
 
 COLOR_SIGNAL_LEAD = "#9333ea"
@@ -42,7 +41,9 @@ class Resolved:
 
 
 def _supply_name(net: str) -> bool:
-    return bool(_SUPPLY_NAME.match(net.strip().upper()))
+    from .placer import infer_role  # placer imports this module
+
+    return infer_role(net) in (NetRole.SUPPLY_POS, NetRole.SUPPLY_NEG)
 
 
 def input_name(net: str) -> bool:
@@ -141,17 +142,21 @@ def classify(placer) -> list[str]:
                 "input rather than put on a rail."
             )
 
-    # Netlists with no sources listed (older ones, hand-written ones): assume
-    # a bench supply for each supply net and a wave generator on each input.
-    if not resolved:
-        ground = next(iter(sorted(grounds)), None)
-        for net, info in nets.items():
-            if info.role is NetRole.SUPPLY_POS and ground:
-                resolved.append(Resolved(f"DC {net}", "dc", net, ground, info.voltage, "power", True))
-            elif info.role is NetRole.SUPPLY_NEG and ground:
-                resolved.append(Resolved(f"DC {net}", "dc", ground, net, info.voltage, "power", True))
-            elif info.role is NetRole.INPUT and ground:
-                resolved.append(Resolved(f"GEN {net}", "signal", net, ground, None, "input", True))
+    # A supply net no source drives (VCC and VEE as bare labels) still goes on
+    # its rail, with a bench supply assumed on it. Netlists with no sources
+    # at all (older ones, hand-written ones) get a wave generator on each
+    # input too.
+    no_sources = not resolved
+    ground = next(iter(sorted(grounds)), None)
+    for net, info in nets.items():
+        if not ground or net in powered:
+            continue
+        if info.role is NetRole.SUPPLY_POS:
+            resolved.append(Resolved(f"DC {net}", "dc", net, ground, info.voltage, "power", True))
+        elif info.role is NetRole.SUPPLY_NEG:
+            resolved.append(Resolved(f"DC {net}", "dc", ground, net, info.voltage, "power", True))
+        elif no_sources and info.role is NetRole.INPUT:
+            resolved.append(Resolved(f"GEN {net}", "signal", net, ground, None, "input", True))
 
     placer.sources = resolved
     return notes
@@ -186,7 +191,8 @@ def _ground_hole(placer, ground: str, near: int, prefer_top: bool) -> Hole | Non
             hole = _rail_hole(placer, rail, near)
             if hole:
                 return hole
-    return _strip_hole(placer, ground)
+    # Nothing else is on ground: the supply's COM clip starts the ground rail.
+    return _strip_hole(placer, ground) or _rail_hole(placer, order[0], near)
 
 
 def attach(placer) -> list[ExternalLead]:

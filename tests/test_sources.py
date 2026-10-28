@@ -132,3 +132,48 @@ def test_hook_up_steps_come_after_the_continuity_check_and_power_comes_first():
     assert "+4.5 V" in leads[0].text and "−4.5 V" in leads[1].text
     assert "wave generator" in leads[2].text
     assert texts[-1].startswith("Switch on the DC supply first")
+
+
+# ---------------------------------------------------------------------------
+# Supply terminals go on the rails
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "name, role",
+    [
+        ("VCC", NetRole.SUPPLY_POS), ("Vcc", NetRole.SUPPLY_POS), ("+VCC", NetRole.SUPPLY_POS),
+        ("VCC1", NetRole.SUPPLY_POS), ("VCC_5V", NetRole.SUPPLY_POS), ("V+15", NetRole.SUPPLY_POS),
+        ("VDDA", NetRole.SUPPLY_POS), ("+15V", NetRole.SUPPLY_POS),
+        ("VEE", NetRole.SUPPLY_NEG), ("-VEE", NetRole.SUPPLY_NEG), ("VEE_15", NetRole.SUPPLY_NEG),
+        ("-VCC", NetRole.SUPPLY_NEG), ("V-12", NetRole.SUPPLY_NEG), ("-15V", NetRole.SUPPLY_NEG),
+        ("Vsaw", NetRole.SIGNAL), ("Vsum", NetRole.SIGNAL), ("VIN", NetRole.SIGNAL), ("N001", NetRole.SIGNAL),
+    ],
+)
+def test_supply_names_with_signs_and_suffixes(name, role):
+    from app.placer import infer_role
+
+    assert infer_role(name) is role
+
+
+def _leads(text):
+    from app.breadboard import verify
+    from app.spice import parse
+
+    layout = place(parse(text))
+    assert verify(layout) == []
+    return {(l.terminal, l.net): l.hole.row for l in layout.leads}
+
+
+def test_vcc_and_vee_sources_reach_the_rails_when_no_part_touches_ground():
+    leads = _leads("* divider\nV1 VCC 0 12\nV2 0 VEE 12\nR1 VCC a 10k\nR2 a VEE 10k\n")
+    assert leads[("+", "VCC")] == bb.RAIL_TOP_POS
+    assert leads[("−", "VEE")] == bb.RAIL_BOT_POS
+    assert leads[("COM", "GND")] in (bb.RAIL_TOP_NEG, bb.RAIL_BOT_NEG)
+
+
+def test_a_vcc_label_with_no_source_still_gets_its_rail_and_a_supply():
+    # a wave generator is listed, VCC and VEE are only labels
+    leads = _leads("* buffer\nV3 in 0 SINE(0 1 1k)\nR1 in a 1k\nXU1 a out VCC VEE out TL072\n")
+    assert leads[("+", "VCC")] == bb.RAIL_TOP_POS
+    assert leads[("−", "VEE")] == bb.RAIL_BOT_POS
